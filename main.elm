@@ -14,7 +14,7 @@ main =
 
 type Capitalization = Monthly | Yearly
 
-type FieldType = IntValue | FloatValue | TextValue
+type FieldType = IntValue | FloatValue | TextValue | OptionValue
 
 type alias Field a = {
   value: a, -- parsed value
@@ -29,7 +29,7 @@ type alias Model = {
   interestRate: Field Float,
   earlyPrincipal: Field Int,
   depositInterest: Field Float,
-  depositCapitalization: Capitalization,
+  depositCapitalization: Field Capitalization,
   earlyPrincipalList: List Int
 }
 
@@ -44,7 +44,7 @@ init =
     interestRate = buildField 11.0 FloatValue,
     earlyPrincipal = buildField 0 IntValue,
     depositInterest = buildField 6.0 FloatValue,
-    depositCapitalization = Yearly,
+    depositCapitalization = buildField Yearly OptionValue,
     earlyPrincipalList = List.repeat 60 0
   }
 
@@ -57,7 +57,7 @@ type Msg
   | EarlyPrincipalChanged String
   --| EarlyPrincipalListChanged Int Int
   | DepositInterestChanged String
-  --| DepositCapitalizationChanged Capitalization
+  | DepositCapitalizationChanged String
 
 setFieldValue value raw field =
   { field | value = value, raw = raw, error = "" }
@@ -87,6 +87,15 @@ earlyPrincipalSetter model value =
 depositInterestSetter model value =
   { model | depositInterest = value }
 
+depositCapitalizationSetter model value =
+  { model | depositCapitalization = value }
+
+toCapitalization value =
+  case value of
+    "Yearly" -> Ok Yearly
+    "Monthly" -> Ok Monthly
+    _ -> Err "wrong value"
+
 update : Msg -> Model -> Model
 update msg model =
   case msg of
@@ -105,6 +114,9 @@ update msg model =
     DepositInterestChanged value ->
       handleInput model model.depositInterest depositInterestSetter value String.toFloat
 
+    DepositCapitalizationChanged value ->
+      handleInput model model.depositCapitalization depositCapitalizationSetter value toCapitalization
+
 -- VIEW
 
 fieldType field =
@@ -112,20 +124,31 @@ fieldType field =
     IntValue -> "number"
     _ -> "text"
 
-fieldInput field msg label =
+inputField field msg label =
   div [] [
     text (label ++ ": "),
     input [ type_ (fieldType field), placeholder label, onInput msg, value field.raw] [],
     text (" " ++ field.error)
   ]
 
+selectField field msg label options =
+  div [] [
+    text (label ++ ": "),
+    select [ onInput msg ] (List.map (\x -> someToOption x field.value) options),
+    text (" " ++ field.error)
+  ]
+
+someToOption x current =
+  option [value (toString x), selected (x == current)] [text (toString x)]
+
 view : Model -> Html Msg
 view model =
   div [] [
-    fieldInput model.amount AmountChanged "Amount",
-    fieldInput model.period PeriodChanged "Period",
-    fieldInput model.interestRate InterestRateChanged "Interest rate",
-    fieldInput model.earlyPrincipal EarlyPrincipalChanged "Early principal",
-    fieldInput model.depositInterest DepositInterestChanged "Desposit interest",
-    text (toString model.amount.value)
+    inputField model.amount AmountChanged "Amount",
+    inputField model.period PeriodChanged "Period",
+    inputField model.interestRate InterestRateChanged "Interest rate",
+    inputField model.earlyPrincipal EarlyPrincipalChanged "Early principal",
+    inputField model.depositInterest DepositInterestChanged "Desposit interest",
+    selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly],
+    text (toString model.depositCapitalization.value)
   ]
