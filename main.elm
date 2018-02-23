@@ -1,7 +1,7 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-
+import Round
 
 main =
   Html.beginnerProgram {
@@ -23,6 +23,19 @@ type alias Field a = {
   kind: FieldType
 }
 
+type alias Payment = {
+  period: Int,
+  monthlyRate: Float,
+  periodicEarlyPrincipal: Float,
+  principal: Float,
+  interest: Float,
+  earlyPrincipal: Float,
+  principalBalance: Float,
+  month: Int,
+  annuity: Float,
+  total: Float
+}
+
 type alias Model = {
   amount: Field Int,
   period: Field Int,
@@ -30,7 +43,8 @@ type alias Model = {
   earlyPrincipal: Field Int,
   depositInterest: Field Float,
   depositCapitalization: Field Capitalization,
-  earlyPrincipalList: List Int
+  earlyPrincipalList: List Int,
+  payments: List Payment
 }
 
 buildField value kind =
@@ -45,7 +59,8 @@ init =
     earlyPrincipal = buildField 0 IntValue,
     depositInterest = buildField 6.0 FloatValue,
     depositCapitalization = buildField Yearly OptionValue,
-    earlyPrincipalList = List.repeat 60 0
+    earlyPrincipalList = List.repeat 60 0,
+    payments = []
   }
 
 -- UPDATE
@@ -66,11 +81,15 @@ setFieldError error raw field =
   { field | error = error, raw = raw }
 
 handleInput model field setter newValue converter =
-  case converter newValue of
-    Ok converted ->
-      setter model (field |> setFieldValue converted newValue)
-    Err message ->
-      setter model (field |> setFieldError message newValue)
+  let updatedModel =
+    case converter newValue of
+      Ok converted ->
+        setter model (field |> setFieldValue converted newValue)
+      Err message ->
+        setter model (field |> setFieldError message newValue)
+  in (
+    { updatedModel | payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value) }
+  )
 
 amountSetter model value =
   { model | amount = value }
@@ -95,6 +114,67 @@ toCapitalization value =
     "Yearly" -> Ok Yearly
     "Monthly" -> Ok Monthly
     _ -> Err "wrong value"
+
+roundMoney amount
+  = (toFloat <| round <| amount * 100) / 100
+
+monthlyRate interestRate =
+  interestRate / (12.0 * 100)
+
+annuityAmount loanAmount monthCount monthlyRate =
+  roundMoney ((loanAmount * monthlyRate) / (1 - ((1 + monthlyRate) ^ toFloat(-monthCount))))
+
+initialLoanState : Model -> Float -> Payment
+initialLoanState model periodicEarlyPrincipal =
+  {
+    period = model.period.value,
+    monthlyRate = monthlyRate model.interestRate.value,
+    periodicEarlyPrincipal = periodicEarlyPrincipal,
+    principal = 0,
+    interest = 0,
+    earlyPrincipal = 0,
+    principalBalance = toFloat model.amount.value,
+    month = model.period.value,
+    annuity = 0,
+    total = 0
+  }
+
+loanStateFor : Int -> Payment -> Payment
+loanStateFor index prevState =
+  let
+    payment = annuityAmount prevState.principalBalance (prevState.period - index) prevState.monthlyRate
+    interestAmount = roundMoney (prevState.principalBalance * prevState.monthlyRate)
+    loanAmount = roundMoney (payment - interestAmount)
+    currentEarlyPrincipal = prevState.periodicEarlyPrincipal
+
+    loanLeftAfterAnnuity = prevState.principalBalance - loanAmount
+
+    earlyPrincipal = roundMoney (Basics.min loanLeftAfterAnnuity currentEarlyPrincipal)
+    loanLeft = roundMoney (loanLeftAfterAnnuity - earlyPrincipal)
+  in (
+    {
+      period = prevState.period,
+      monthlyRate = prevState.monthlyRate,
+      periodicEarlyPrincipal = prevState.periodicEarlyPrincipal,
+      principal = loanAmount,
+      interest = interestAmount,
+      earlyPrincipal = earlyPrincipal,
+      principalBalance = loanLeft,
+      month = index + 1,
+      annuity = payment,
+      total = roundMoney (loanAmount + interestAmount + earlyPrincipal)
+    }
+  )
+
+paymentsHistory : Model -> Float -> List Payment
+paymentsHistory model periodicEarlyPrincipal =
+  let
+    loanLeft = model.amount.value
+    monthes = List.range 0 (model.period.value - 1)
+    loanLefts = List.scanl loanStateFor (initialLoanState model periodicEarlyPrincipal) monthes
+  in (
+    List.drop 1 loanLefts
+  )
 
 update : Msg -> Model -> Model
 update msg model =
@@ -141,8 +221,7 @@ selectField field msg label options =
 someToOption x current =
   option [value (toString x), selected (x == current)] [text (toString x)]
 
-view : Model -> Html Msg
-view model =
+mortgageForm model =
   div [] [
     inputField model.amount AmountChanged "Amount",
     inputField model.period PeriodChanged "Period",
@@ -152,3 +231,42 @@ view model =
     selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly],
     text (toString model.depositCapitalization.value)
   ]
+
+prettyPrice price =
+  Round.round 2 price
+
+renderPayment payment =
+  tr [] [
+    td [] [text <| toString payment.month],
+    td [] [text <| prettyPrice payment.principal],
+    td [] [text <| prettyPrice payment.interest],
+    td [] [text <| prettyPrice payment.earlyPrincipal
+      --<InputField
+      --  value=prettyPrice payment.earlyPrincipal
+      --  onChange={earlyPrincipalChange
+      --/>
+    ],
+    td [] [text <| prettyPrice payment.principalBalance],
+    td [] [text <| prettyPrice payment.total]
+  ]
+
+renderPaymentsHeader =
+  tr [] [
+    th [] [text "Month"],
+    th [] [text "Principal"],
+    th [] [text "Interest"],
+    th [] [text "Early principal"],
+    th [] [text "Principal balance"],
+    th [] [text "Total"]
+  ]
+
+renderPayments model =
+  div [] [
+    table [] [
+      tbody [] ([renderPaymentsHeader] ++ (List.map renderPayment model.payments))
+    ]
+  ]
+
+view : Model -> Html Msg
+view model =
+  div [] [mortgageForm model, renderPayments model]
