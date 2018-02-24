@@ -2,6 +2,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Round
+import Array exposing (Array)
 
 main =
   Html.beginnerProgram {
@@ -27,6 +28,7 @@ type alias Payment = {
   period: Int,
   monthlyRate: Float,
   periodicEarlyPrincipal: Float,
+  earlyPrincipalList: Array Float,
   principal: Float,
   interest: Float,
   earlyPrincipal: Float,
@@ -43,7 +45,7 @@ type alias Model = {
   earlyPrincipal: Field Int,
   depositInterest: Field Float,
   depositCapitalization: Field Capitalization,
-  earlyPrincipalList: List Int,
+  earlyPrincipalList: Array (Field Int),
   payments: List Payment
 }
 
@@ -59,7 +61,7 @@ init =
     earlyPrincipal = buildField 0 IntValue,
     depositInterest = buildField 6.0 FloatValue,
     depositCapitalization = buildField Yearly OptionValue,
-    earlyPrincipalList = List.repeat 60 0,
+    earlyPrincipalList = Array.repeat 60 (buildField 0 IntValue),
     payments = []
   }
 
@@ -70,7 +72,7 @@ type Msg
   | PeriodChanged String
   | InterestRateChanged String
   | EarlyPrincipalChanged String
-  --| EarlyPrincipalListChanged Int Int
+  | EarlyPrincipalItemChanged Int String
   | DepositInterestChanged String
   | DepositCapitalizationChanged String
 
@@ -109,6 +111,9 @@ depositInterestSetter model value =
 depositCapitalizationSetter model value =
   { model | depositCapitalization = value }
 
+earlyPrincipalListSetter index model value =
+  { model | earlyPrincipalList = Array.set index value model.earlyPrincipalList }
+
 toCapitalization value =
   case value of
     "Yearly" -> Ok Yearly
@@ -130,6 +135,7 @@ initialLoanState model periodicEarlyPrincipal =
     period = model.period.value,
     monthlyRate = monthlyRate model.interestRate.value,
     periodicEarlyPrincipal = periodicEarlyPrincipal,
+    earlyPrincipalList = Array.map (\f -> toFloat f.value) model.earlyPrincipalList,
     principal = 0,
     interest = 0,
     earlyPrincipal = 0,
@@ -145,9 +151,17 @@ loanStateFor index prevState =
     payment = annuityAmount prevState.principalBalance (prevState.period - index) prevState.monthlyRate
     interestAmount = roundMoney (prevState.principalBalance * prevState.monthlyRate)
     loanAmount = roundMoney (payment - interestAmount)
-    currentEarlyPrincipal = prevState.periodicEarlyPrincipal
 
     loanLeftAfterAnnuity = prevState.principalBalance - loanAmount
+
+    specificEarlyPrincipal = Array.get index prevState.earlyPrincipalList
+
+    currentEarlyPrincipal =
+      case specificEarlyPrincipal of
+        Just value ->
+          if value > 0 then value else prevState.periodicEarlyPrincipal
+        Nothing ->
+          prevState.periodicEarlyPrincipal
 
     earlyPrincipal = roundMoney (Basics.min loanLeftAfterAnnuity currentEarlyPrincipal)
     loanLeft = roundMoney (loanLeftAfterAnnuity - earlyPrincipal)
@@ -156,6 +170,7 @@ loanStateFor index prevState =
       period = prevState.period,
       monthlyRate = prevState.monthlyRate,
       periodicEarlyPrincipal = prevState.periodicEarlyPrincipal,
+      earlyPrincipalList = prevState.earlyPrincipalList,
       principal = loanAmount,
       interest = interestAmount,
       earlyPrincipal = earlyPrincipal,
@@ -173,7 +188,7 @@ paymentsHistory model periodicEarlyPrincipal =
     monthes = List.range 0 (model.period.value - 1)
     loanLefts = List.scanl loanStateFor (initialLoanState model periodicEarlyPrincipal) monthes
   in (
-    List.drop 1 loanLefts
+    List.filter (\p -> p.total > 0) loanLefts
   )
 
 update : Msg -> Model -> Model
@@ -196,6 +211,14 @@ update msg model =
 
     DepositCapitalizationChanged value ->
       handleInput model model.depositCapitalization depositCapitalizationSetter value toCapitalization
+
+    EarlyPrincipalItemChanged month value ->
+      case Array.get (month - 1) model.earlyPrincipalList of
+        Just field ->
+          handleInput model field (earlyPrincipalListSetter (month - 1)) value String.toInt
+        Nothing ->
+          model
+      --model
 
 -- VIEW
 
@@ -240,11 +263,8 @@ renderPayment payment =
     td [] [text <| toString payment.month],
     td [] [text <| prettyPrice payment.principal],
     td [] [text <| prettyPrice payment.interest],
-    td [] [text <| prettyPrice payment.earlyPrincipal
-      --<InputField
-      --  value=prettyPrice payment.earlyPrincipal
-      --  onChange={earlyPrincipalChange
-      --/>
+    td [] [
+      input [ type_ "number", onInput <| EarlyPrincipalItemChanged payment.month, value <| toString payment.earlyPrincipal] []
     ],
     td [] [text <| prettyPrice payment.principalBalance],
     td [] [text <| prettyPrice payment.total]
