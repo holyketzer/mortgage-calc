@@ -38,6 +38,15 @@ type alias Payment = {
   total: Float
 }
 
+type alias PaymentsTotal = {
+  principal: Float,
+  interest: Float,
+  month: Int,
+  overpayment: Float,
+  interestSaved: Float,
+  effectivePercent: Float
+}
+
 type alias Model = {
   amount: Field Int,
   period: Field Int,
@@ -46,7 +55,8 @@ type alias Model = {
   depositInterest: Field Float,
   depositCapitalization: Field Capitalization,
   earlyPrincipalList: Array (Field Int),
-  payments: List Payment
+  payments: List Payment,
+  total: PaymentsTotal
 }
 
 buildField value kind =
@@ -62,7 +72,15 @@ init =
     depositInterest = buildField 6.0 FloatValue,
     depositCapitalization = buildField Yearly OptionValue,
     earlyPrincipalList = Array.repeat 60 (buildField 0 IntValue),
-    payments = []
+    payments = [],
+    total = {
+      principal = 0,
+      interest = 0,
+      month = 0,
+      overpayment = 0,
+      interestSaved = 0,
+      effectivePercent = 0
+    }
   }
 
 -- UPDATE
@@ -83,14 +101,18 @@ setFieldError error raw field =
   { field | error = error, raw = raw }
 
 handleInput model field setter newValue converter =
-  let updatedModel =
-    case converter newValue of
-      Ok converted ->
-        setter model (field |> setFieldValue converted newValue)
-      Err message ->
-        setter model (field |> setFieldError message newValue)
+  let
+    updatedModel =
+      case converter newValue of
+        Ok converted ->
+          setter model (field |> setFieldValue converted newValue)
+        Err message ->
+          setter model (field |> setFieldError message newValue)
+
+    payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value)
+    total = paymentsTotal payments (toFloat updatedModel.amount.value) (monthlyRate updatedModel.interestRate.value) updatedModel.period.value
   in (
-    { updatedModel | payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value) }
+    { updatedModel | payments = payments, total = total }
   )
 
 amountSetter model value =
@@ -191,6 +213,80 @@ paymentsHistory model periodicEarlyPrincipal =
     List.filter (\p -> p.total > 0) loanLefts
   )
 
+interestAmountStep index acc =
+  let
+    payment = roundMoney <| annuityAmount acc.loanLeft (acc.monthCount - index) acc.monthlyRate
+    interestAmount = roundMoney <| acc.loanLeft * acc.monthlyRate
+    loanAmount = roundMoney <| payment - interestAmount
+  in (
+    {
+      loanLeft = acc.loanLeft - loanAmount,
+      totalInterest = acc.totalInterest + interestAmount,
+      monthCount = acc.monthCount,
+      monthlyRate = acc.monthlyRate
+    }
+  )
+
+interestAmount : Float -> Float -> Int -> Float
+interestAmount amount monthlyRate monthCount =
+  let
+    from = {
+      loanLeft = amount,
+      totalInterest = 0,
+      monthCount = monthCount,
+      monthlyRate = monthlyRate
+    }
+
+    res = List.foldl interestAmountStep from (List.range 0 (monthCount - 1))
+  in (
+    res.totalInterest
+  )
+
+percentByInterest : Float -> Float -> Float -> Int -> Float
+percentByInterest amount monthlyRate totalInterest monthCount =
+  let
+    left = 0
+    right = monthlyRate
+    delta = amount
+  in (
+    (percentByInterestLoop amount monthCount totalInterest left right delta) * 12 * 100
+  )
+
+percentByInterestLoop : Float -> Int -> Float -> Float -> Float -> Float -> Float
+percentByInterestLoop amount monthCount totalInterest left right delta =
+  if delta > 10 then
+    let
+      newCurrent = (right + left) / 2
+      newInterest = interestAmount amount newCurrent monthCount
+      newDelta = abs (newInterest - totalInterest)
+    in (
+      if newInterest > totalInterest then
+        percentByInterestLoop amount monthCount totalInterest left newCurrent newDelta
+      else
+        percentByInterestLoop amount monthCount totalInterest newCurrent right newDelta
+    )
+  else
+    left
+
+paymentsTotal : List Payment -> Float -> Float -> Int -> PaymentsTotal
+paymentsTotal payments amount monthlyRate period =
+  let
+    principal = roundMoney <| List.sum <| (List.map .principal payments) ++ (List.map .earlyPrincipal payments)
+    interest = roundMoney <| List.sum <| (List.map .interest payments)
+    month = List.length payments
+
+    interestSaved = (interestAmount amount monthlyRate period) - interest
+  in (
+    {
+      principal = principal,
+      interest = interest,
+      month = month,
+      overpayment = roundMoney (100 * interest / principal),
+      interestSaved = roundMoney interestSaved,
+      effectivePercent = roundMoney (percentByInterest amount monthlyRate interest month)
+    }
+  )
+
 update : Msg -> Model -> Model
 update msg model =
   case msg of
@@ -218,7 +314,6 @@ update msg model =
           handleInput model field (earlyPrincipalListSetter (month - 1)) value String.toInt
         Nothing ->
           model
-      --model
 
 -- VIEW
 
@@ -251,8 +346,7 @@ mortgageForm model =
     inputField model.interestRate InterestRateChanged "Interest rate",
     inputField model.earlyPrincipal EarlyPrincipalChanged "Early principal",
     inputField model.depositInterest DepositInterestChanged "Desposit interest",
-    selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly],
-    text (toString model.depositCapitalization.value)
+    selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly]
   ]
 
 prettyPrice price =
@@ -287,6 +381,36 @@ renderPayments model =
     ]
   ]
 
+renderPaymentsTotal total =
+  div [class "block"] [
+    br [] [],
+    div [class "block-item"] [
+      strong [] [text "Total principal: "],
+      text <| (toString total.principal) ++ " руб"
+    ],
+    div [class "block-item"] [
+      strong [] [text "Total interest: "],
+      text <| (toString total.interest) ++ " руб"
+    ],
+    div [class "block-item"] [
+      strong [] [text "Overpayment: "],
+      text <| (toString total.overpayment) ++ " %"
+    ],
+    div [class "block-item"] [
+      strong [] [text "Effective percent: "],
+      text <| (toString total.effectivePercent) ++ " %"
+    ],
+    div [class "block-item"] [
+      strong [] [text "Interest saved: "],
+      text <| (toString total.interestSaved) ++ " руб"
+    ],
+    br [] []
+  ]
+
 view : Model -> Html Msg
 view model =
-  div [] [mortgageForm model, renderPayments model]
+  div [] [
+    mortgageForm model,
+    renderPaymentsTotal model.total,
+    renderPayments model
+  ]
