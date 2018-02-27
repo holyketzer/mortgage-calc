@@ -38,6 +38,15 @@ type alias Payment = {
   total: Float
 }
 
+type alias Deposit = {
+  deposit: Float,
+  interest: Float,
+  total: Float,
+  month: Int,
+  depositInterest: Float,
+  depositCapitalization: Capitalization
+}
+
 type alias PaymentsTotal = {
   principal: Float,
   interest: Float,
@@ -56,7 +65,8 @@ type alias Model = {
   depositCapitalization: Field Capitalization,
   earlyPrincipalList: Array (Field Int),
   payments: List Payment,
-  total: PaymentsTotal
+  total: PaymentsTotal,
+  depositHistory: List Deposit
 }
 
 buildField value kind =
@@ -80,7 +90,8 @@ init =
       overpayment = 0,
       interestSaved = 0,
       effectivePercent = 0
-    }
+    },
+    depositHistory = []
   }
 
 -- UPDATE
@@ -111,8 +122,9 @@ handleInput model field setter newValue converter =
 
     payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value)
     total = paymentsTotal payments (toFloat updatedModel.amount.value) (monthlyRate updatedModel.interestRate.value) updatedModel.period.value
+    deposits = getDepositHistory payments updatedModel.depositInterest.value updatedModel.depositCapitalization.value
   in (
-    { updatedModel | payments = payments, total = total }
+    { updatedModel | payments = payments, total = total, depositHistory = deposits }
   )
 
 amountSetter model value =
@@ -287,6 +299,57 @@ paymentsTotal payments amount monthlyRate period =
     }
   )
 
+getDepositHistoryItem : Payment -> Deposit -> Deposit
+getDepositHistoryItem payment prevDeposit =
+  let
+    interest =
+      if payment.month > 1 then
+        case prevDeposit.depositCapitalization of
+          Monthly ->
+            roundMoney (prevDeposit.total * prevDeposit.depositInterest / 12 / 100)
+          Yearly ->
+            if payment.month % 12 == 0 then
+              roundMoney (prevDeposit.total * prevDeposit.depositInterest / 100)
+            else
+              0
+      else
+        0
+
+    total = roundMoney (prevDeposit.total + payment.earlyPrincipal + interest)
+  in (
+    {
+      deposit = payment.earlyPrincipal,
+      interest = interest,
+      total = total,
+      month = payment.month,
+      depositInterest = prevDeposit.depositInterest,
+      depositCapitalization = prevDeposit.depositCapitalization
+    }
+  )
+
+getDepositHistory : List Payment -> Float -> Capitalization -> List Deposit
+getDepositHistory paymentsHistory depositInterest depositCapitalization =
+  let
+    initialDeposit = {
+      deposit = 0,
+      interest = 0,
+      total = 0,
+      month = 0,
+      depositInterest = depositInterest,
+      depositCapitalization = depositCapitalization
+    }
+    deposits = List.scanl getDepositHistoryItem initialDeposit paymentsHistory
+  in (
+    List.filter (\deposit -> deposit.month > 0) deposits
+  )
+
+  --getDepositTotal(depositHistory) {
+  --  const interest = this.round(depositHistory.sum('interest'));
+  --  const total = depositHistory.slice(-1)[0].total;
+
+  --  return { interest, total };
+  --}
+
 update : Msg -> Model -> Model
 update msg model =
   case msg of
@@ -407,10 +470,35 @@ renderPaymentsTotal total =
     br [] []
   ]
 
+renderDepositItem item =
+  tr [] [
+    td [] [text <| toString item.month],
+    td [] [text <| toString item.deposit],
+    td [] [text <| toString item.interest],
+    td [] [text <| toString item.total]
+  ]
+
+renderDepositHistory depositHistory =
+  table [class "mortgage-table"] [
+    tbody [] ([
+      tr [] [
+        th [] [text "Month"],
+        th [] [text "Deposit"],
+        th [] [text "Interest"],
+        th [] [text "Total"]
+      ]
+    ] ++ (List.map renderDepositItem depositHistory))
+  ]
+
 view : Model -> Html Msg
 view model =
   div [] [
     mortgageForm model,
-    renderPaymentsTotal model.total,
-    renderPayments model
+    div [style [("float", "left")]] [
+      renderPaymentsTotal model.total,
+      renderPayments model
+    ],
+    div [style [("float", "left"), ("margin-left", "50px")]] [
+      renderDepositHistory model.depositHistory
+    ]
   ]
