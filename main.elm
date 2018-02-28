@@ -56,6 +56,11 @@ type alias PaymentsTotal = {
   effectivePercent: Float
 }
 
+type alias DepositTotal = {
+  interest: Float,
+  total: Float
+}
+
 type alias Model = {
   amount: Field Int,
   period: Field Int,
@@ -66,7 +71,8 @@ type alias Model = {
   earlyPrincipalList: Array (Field Int),
   payments: List Payment,
   total: PaymentsTotal,
-  depositHistory: List Deposit
+  depositHistory: List Deposit,
+  depositTotal: DepositTotal
 }
 
 buildField value kind =
@@ -91,7 +97,11 @@ init =
       interestSaved = 0,
       effectivePercent = 0
     },
-    depositHistory = []
+    depositHistory = [],
+    depositTotal = {
+      interest = 0,
+      total = 0
+    }
   }
 
 -- UPDATE
@@ -123,8 +133,9 @@ handleInput model field setter newValue converter =
     payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value)
     total = paymentsTotal payments (toFloat updatedModel.amount.value) (monthlyRate updatedModel.interestRate.value) updatedModel.period.value
     deposits = getDepositHistory payments updatedModel.depositInterest.value updatedModel.depositCapitalization.value
+    depositTotal = getDepositTotal deposits
   in (
-    { updatedModel | payments = payments, total = total, depositHistory = deposits }
+    { updatedModel | payments = payments, total = total, depositHistory = deposits, depositTotal = depositTotal }
   )
 
 amountSetter model value =
@@ -343,12 +354,20 @@ getDepositHistory paymentsHistory depositInterest depositCapitalization =
     List.filter (\deposit -> deposit.month > 0) deposits
   )
 
-  --getDepositTotal(depositHistory) {
-  --  const interest = this.round(depositHistory.sum('interest'));
-  --  const total = depositHistory.slice(-1)[0].total;
-
-  --  return { interest, total };
-  --}
+getDepositTotal : List Deposit -> DepositTotal
+getDepositTotal depositHistory =
+  let
+    lastItem = List.head <| List.reverse depositHistory
+    total =
+      case lastItem of
+        Just deposit -> deposit.total
+        Nothing -> 0
+  in (
+    {
+      interest = roundMoney <| List.sum <| List.map .interest depositHistory,
+      total = total
+    }
+  )
 
 update : Msg -> Model -> Model
 update msg model =
@@ -490,6 +509,23 @@ renderDepositHistory depositHistory =
     ] ++ (List.map renderDepositItem depositHistory))
   ]
 
+renderDepositTotal total =
+  div [class "block"] [
+    br [] [],
+    div [class "block-item"] [
+      strong [] [text "Total: "],
+      text <| (toString total.total) ++ " руб"
+    ],
+    div [class "block-item"] [text "."],
+    div [class "block-item"] [text "."],
+    div [class "block-item"] [text "."],
+    div [class "block-item"] [
+      strong [] [text "Interest earned: "],
+      text <| (toString total.interest) ++ " руб"
+    ],
+    br [] []
+  ]
+
 view : Model -> Html Msg
 view model =
   div [] [
@@ -499,6 +535,7 @@ view model =
       renderPayments model
     ],
     div [style [("float", "left"), ("margin-left", "50px")]] [
+      renderDepositTotal model.depositTotal,
       renderDepositHistory model.depositHistory
     ]
   ]
