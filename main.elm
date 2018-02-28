@@ -526,10 +526,31 @@ renderDepositTotal total =
     br [] []
   ]
 
+renderInterestComparator mortgageSavedIntereset depositInterest =
+  let
+    delta = abs <| roundMoney <| mortgageSavedIntereset - depositInterest
+    value =
+      if mortgageSavedIntereset > 0 then
+        if mortgageSavedIntereset > depositInterest then
+          "Досрочно погашать выгоднее на " ++ toString delta ++ " руб."
+        else if mortgageSavedIntereset < depositInterest then
+          "Депозит выгоднее на " ++ toString delta ++ " руб."
+        else
+          "Разницы нет"
+      else
+        ""
+  in (
+    div [class "block ui large header"] [
+      br [] [],
+      text value
+    ]
+  )
+
 view : Model -> Html Msg
 view model =
   div [] [
     mortgageForm model,
+    renderInterestComparator model.total.interestSaved model.depositTotal.interest,
     div [style [("float", "left")]] [
       renderPaymentsTotal model.total,
       renderPayments model
