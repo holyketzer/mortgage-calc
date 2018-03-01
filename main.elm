@@ -1,8 +1,11 @@
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
-import Round
 import Array exposing (Array)
+import Html exposing (..)
+import Round
+
+import Events exposing (..)
+import Model exposing (..)
+import View exposing (render)
+import Shared exposing (roundMoney)
 
 main =
   Html.beginnerProgram {
@@ -12,71 +15,6 @@ main =
   }
 
 -- MODEL
-
-type Capitalization = Monthly | Yearly
-
-type FieldType = IntValue | FloatValue | TextValue | OptionValue
-
-type alias Field a = {
-  value: a, -- parsed value
-  raw: String, -- raw value
-  error: String,
-  kind: FieldType
-}
-
-type alias Payment = {
-  period: Int,
-  monthlyRate: Float,
-  periodicEarlyPrincipal: Float,
-  earlyPrincipalList: Array Float,
-  principal: Float,
-  interest: Float,
-  earlyPrincipal: Float,
-  principalBalance: Float,
-  month: Int,
-  annuity: Float,
-  total: Float
-}
-
-type alias Deposit = {
-  deposit: Float,
-  interest: Float,
-  total: Float,
-  month: Int,
-  depositInterest: Float,
-  depositCapitalization: Capitalization
-}
-
-type alias PaymentsTotal = {
-  principal: Float,
-  interest: Float,
-  month: Int,
-  overpayment: Float,
-  interestSaved: Float,
-  effectivePercent: Float
-}
-
-type alias DepositTotal = {
-  interest: Float,
-  total: Float
-}
-
-type alias Model = {
-  amount: Field Int,
-  period: Field Int,
-  interestRate: Field Float,
-  earlyPrincipal: Field Int,
-  depositInterest: Field Float,
-  depositCapitalization: Field Capitalization,
-  earlyPrincipalList: Array (Field Int),
-  payments: List Payment,
-  total: PaymentsTotal,
-  depositHistory: List Deposit,
-  depositTotal: DepositTotal
-}
-
-buildField value kind =
-  { value = value, raw = toString value, error = "", kind = kind }
 
 init : Model
 init =
@@ -105,15 +43,6 @@ init =
   }
 
 -- UPDATE
-
-type Msg
-  = AmountChanged String
-  | PeriodChanged String
-  | InterestRateChanged String
-  | EarlyPrincipalChanged String
-  | EarlyPrincipalItemChanged Int String
-  | DepositInterestChanged String
-  | DepositCapitalizationChanged String
 
 setFieldValue value raw field =
   { field | value = value, raw = raw, error = "" }
@@ -164,9 +93,6 @@ toCapitalization value =
     "Yearly" -> Ok Yearly
     "Monthly" -> Ok Monthly
     _ -> Err "wrong value"
-
-roundMoney amount
-  = (toFloat <| round <| amount * 100) / 100
 
 monthlyRate interestRate =
   interestRate / (12.0 * 100)
@@ -399,164 +325,6 @@ update msg model =
 
 -- VIEW
 
-fieldType field =
-  case field.kind of
-    IntValue -> "number"
-    _ -> "text"
-
-inputField field msg label =
-  div [] [
-    text (label ++ ": "),
-    input [ type_ (fieldType field), placeholder label, onInput msg, value field.raw] [],
-    text (" " ++ field.error)
-  ]
-
-selectField field msg label options =
-  div [] [
-    text (label ++ ": "),
-    select [ onInput msg ] (List.map (\x -> someToOption x field.value) options),
-    text (" " ++ field.error)
-  ]
-
-someToOption x current =
-  option [value (toString x), selected (x == current)] [text (toString x)]
-
-mortgageForm model =
-  div [] [
-    inputField model.amount AmountChanged "Amount",
-    inputField model.period PeriodChanged "Period",
-    inputField model.interestRate InterestRateChanged "Interest rate",
-    inputField model.earlyPrincipal EarlyPrincipalChanged "Early principal",
-    inputField model.depositInterest DepositInterestChanged "Desposit interest",
-    selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly]
-  ]
-
-prettyPrice price =
-  Round.round 2 price
-
-renderPayment payment =
-  tr [] [
-    td [] [text <| toString payment.month],
-    td [] [text <| prettyPrice payment.principal],
-    td [] [text <| prettyPrice payment.interest],
-    td [] [
-      input [ type_ "number", onInput <| EarlyPrincipalItemChanged payment.month, value <| toString payment.earlyPrincipal] []
-    ],
-    td [] [text <| prettyPrice payment.principalBalance],
-    td [] [text <| prettyPrice payment.total]
-  ]
-
-renderPaymentsHeader =
-  tr [] [
-    th [] [text "Month"],
-    th [] [text "Principal"],
-    th [] [text "Interest"],
-    th [] [text "Early principal"],
-    th [] [text "Principal balance"],
-    th [] [text "Total"]
-  ]
-
-renderPayments model =
-  div [] [
-    table [] [
-      tbody [] ([renderPaymentsHeader] ++ (List.map renderPayment model.payments))
-    ]
-  ]
-
-renderPaymentsTotal total =
-  div [class "block"] [
-    br [] [],
-    div [class "block-item"] [
-      strong [] [text "Total principal: "],
-      text <| (toString total.principal) ++ " руб"
-    ],
-    div [class "block-item"] [
-      strong [] [text "Total interest: "],
-      text <| (toString total.interest) ++ " руб"
-    ],
-    div [class "block-item"] [
-      strong [] [text "Overpayment: "],
-      text <| (toString total.overpayment) ++ " %"
-    ],
-    div [class "block-item"] [
-      strong [] [text "Effective percent: "],
-      text <| (toString total.effectivePercent) ++ " %"
-    ],
-    div [class "block-item"] [
-      strong [] [text "Interest saved: "],
-      text <| (toString total.interestSaved) ++ " руб"
-    ],
-    br [] []
-  ]
-
-renderDepositItem item =
-  tr [] [
-    td [] [text <| toString item.month],
-    td [] [text <| toString item.deposit],
-    td [] [text <| toString item.interest],
-    td [] [text <| toString item.total]
-  ]
-
-renderDepositHistory depositHistory =
-  table [class "mortgage-table"] [
-    tbody [] ([
-      tr [] [
-        th [] [text "Month"],
-        th [] [text "Deposit"],
-        th [] [text "Interest"],
-        th [] [text "Total"]
-      ]
-    ] ++ (List.map renderDepositItem depositHistory))
-  ]
-
-renderDepositTotal total =
-  div [class "block"] [
-    br [] [],
-    div [class "block-item"] [
-      strong [] [text "Total: "],
-      text <| (toString total.total) ++ " руб"
-    ],
-    div [class "block-item"] [text "."],
-    div [class "block-item"] [text "."],
-    div [class "block-item"] [text "."],
-    div [class "block-item"] [
-      strong [] [text "Interest earned: "],
-      text <| (toString total.interest) ++ " руб"
-    ],
-    br [] []
-  ]
-
-renderInterestComparator mortgageSavedIntereset depositInterest =
-  let
-    delta = abs <| roundMoney <| mortgageSavedIntereset - depositInterest
-    value =
-      if mortgageSavedIntereset > 0 then
-        if mortgageSavedIntereset > depositInterest then
-          "Досрочно погашать выгоднее на " ++ toString delta ++ " руб."
-        else if mortgageSavedIntereset < depositInterest then
-          "Депозит выгоднее на " ++ toString delta ++ " руб."
-        else
-          "Разницы нет"
-      else
-        ""
-  in (
-    div [class "block ui large header"] [
-      br [] [],
-      text value
-    ]
-  )
-
 view : Model -> Html Msg
 view model =
-  div [] [
-    mortgageForm model,
-    renderInterestComparator model.total.interestSaved model.depositTotal.interest,
-    div [style [("float", "left")]] [
-      renderPaymentsTotal model.total,
-      renderPayments model
-    ],
-    div [style [("float", "left"), ("margin-left", "50px")]] [
-      renderDepositTotal model.depositTotal,
-      renderDepositHistory model.depositHistory
-    ]
-  ]
+  View.render model
