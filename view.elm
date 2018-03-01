@@ -4,7 +4,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Round
+import Charts.StackedBarChart
 
+import Charts.StackedBarChart
 import Events exposing (..)
 import Model exposing (..)
 import Shared exposing (roundMoney)
@@ -156,9 +158,26 @@ renderInterestComparator mortgageSavedIntereset depositInterest =
     ]
   )
 
+renderMortgageChart payments =
+  let
+    data = [
+      ("Early principal", List.map .earlyPrincipal payments),
+      ("Principal", List.map .principal payments),
+      ("Interest", List.map .interest payments)
+    ]
+  in
+    Charts.StackedBarChart.render data
+
+samples =
+  [
+    ("Assault", [1, 2, 3, 4, 5, 6, 7]),
+    ("Robbery", [3, 5, 4, 3, 5, 4, 2])
+  ]
+
 render model =
   div [] [
     mortgageForm model,
+    renderMortgageChart model.payments,
     renderInterestComparator model.total.interestSaved model.depositTotal.interest,
     div [style [("float", "left")]] [
       renderPaymentsTotal model.total,
