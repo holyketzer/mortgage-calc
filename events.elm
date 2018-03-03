@@ -1,7 +1,10 @@
 module Events exposing (Msg(..))
 
+import Window
+
 type Msg
-  = AmountChanged String
+  = GetWindowSize Window.Size
+  | AmountChanged String
   | PeriodChanged String
   | InterestRateChanged String
   | EarlyPrincipalChanged String

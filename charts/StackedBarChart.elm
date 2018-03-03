@@ -11,18 +11,11 @@ import Color exposing (Color)
 import List.Extra as List
 
 
-render : List(String, List Float) -> Svg msg
-render data =
-    view (Shape.stack (config data))
+render : List(String, List Float) -> { width: Int, height: Int } -> Svg msg
+render data windowSize =
+    view (Shape.stack (config data)) { width = toFloat windowSize.width, height = toFloat windowSize.height/2 }
 
 type alias Year = Int
-
-canvas : { width : Float, height : Float }
-canvas =
-  {
-    width = 990,
-    height = 504
-  }
 
 padding : { bottom : number, left : number1, right : number2, top : number3 }
 padding =
@@ -60,9 +53,8 @@ column xScale (year, values) =
   in
     g [ class "column" ] (List.map2 block (colors (List.length values)) values)
 
-
-view : StackResult String -> Svg msg
-view { values, labels, extent } =
+view : StackResult String -> { width: Float, height: Float } -> Svg msg
+view { values, labels, extent } windowSize =
   let
     -- transpose back to get the values per year
     yearValues =
@@ -72,7 +64,7 @@ view { values, labels, extent } =
 
     xScale : BandScale Year
     xScale =
-      Scale.band { defaultBandConfig | paddingInner = 0.1, paddingOuter = 0.2 } years ( 0, canvas.width - (padding.top + padding.bottom) )
+      Scale.band { defaultBandConfig | paddingInner = 0.1, paddingOuter = 0.2 } years ( 0, windowSize.width - (padding.top + padding.bottom) )
 
     (minY, maxY) = extent
 
@@ -84,7 +76,7 @@ view { values, labels, extent } =
 
     yScale : ContinuousScale
     yScale =
-      Scale.linear fixedExtent ( canvas.height - (padding.left + padding.right), 0 )
+      Scale.linear fixedExtent ( windowSize.height - (padding.left + padding.right), 0 )
         |> flip Scale.nice 4
 
     axisOptions =
@@ -101,8 +93,8 @@ view { values, labels, extent } =
     scaledValues =
       List.map (List.map (\( y1, y2 ) -> ( Scale.convert yScale y1, Scale.convert yScale y2 ))) yearValues
   in
-    svg [ width (toString canvas.width ++ "px"), height (toString canvas.height ++ "px") ] [
-      g [ translate (padding.left - 1) (canvas.height - padding.bottom) ] [ xAxis ],
+    svg [ width (toString windowSize.width ++ "px"), height (toString windowSize.height ++ "px") ] [
+      g [ translate (padding.left - 1) (windowSize.height - padding.bottom) ] [ xAxis ],
       g [ translate (padding.left - 1) padding.top ] [ yAxis ],
       g [ translate padding.left padding.top, class "series" ] <|
             List.map (column xScale) (List.map2 (,) years scaledValues)

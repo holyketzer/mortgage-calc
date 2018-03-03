@@ -158,7 +158,7 @@ renderInterestComparator mortgageSavedIntereset depositInterest =
     ]
   )
 
-renderMortgageChart payments =
+renderMortgageChart payments windowSize =
   let
     data = [
       ("Early principal", List.map .earlyPrincipal payments),
@@ -166,7 +166,7 @@ renderMortgageChart payments =
       ("Interest", List.map .interest payments)
     ]
   in
-    Charts.StackedBarChart.render data
+    Charts.StackedBarChart.render data windowSize
 
 samples =
   [
@@ -177,7 +177,7 @@ samples =
 render model =
   div [] [
     mortgageForm model,
-    renderMortgageChart model.payments,
+    renderMortgageChart model.payments model.windowSize,
     renderInterestComparator model.total.interestSaved model.depositTotal.interest,
     div [style [("float", "left")]] [
       renderPaymentsTotal model.total,

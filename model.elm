@@ -1,6 +1,7 @@
 module Model exposing (Capitalization(..), FieldType(..), Field, Payment, Deposit, PaymentsTotal, DepositTotal, Model, buildField)
 
 import Array exposing (Array)
+import Window
 
 type Capitalization = Monthly | Yearly
 
@@ -51,6 +52,7 @@ type alias DepositTotal = {
 }
 
 type alias Model = {
+  windowSize: Window.Size,
   amount: Field Int,
   period: Field Int,
   interestRate: Field Float,

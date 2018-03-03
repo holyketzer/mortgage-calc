@@ -6,12 +6,21 @@ import Events exposing (..)
 import Model exposing (..)
 import View exposing (render)
 import Shared exposing (roundMoney)
+import Task
+import Window
 
 main =
-  Html.beginnerProgram {
-    model = init,
+  Html.program {
+    init = (
+      init,
+      Cmd.batch [
+        Task.perform (\size -> GetWindowSize size) Window.size,
+        Task.perform (\_ -> InterestRateChanged "11.0") (Task.succeed ())
+      ]
+    ),
     view = view,
-    update = update
+    update = update,
+    subscriptions = subscriptions
   }
 
 -- MODEL
@@ -19,6 +28,7 @@ main =
 init : Model
 init =
   {
+    windowSize = { width = 100, height = 50 },
     amount = buildField 1000000 IntValue,
     period = buildField 60 IntValue,
     interestRate = buildField 11.0 FloatValue,
@@ -41,6 +51,12 @@ init =
       total = 0
     }
   }
+
+-- SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
 
 -- UPDATE
 
@@ -295,33 +311,36 @@ getDepositTotal depositHistory =
     }
   )
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    GetWindowSize size ->
+      ({ model | windowSize = size }, Cmd.none)
+
     AmountChanged value ->
-      handleInput model model.amount amountSetter value String.toInt
+      (handleInput model model.amount amountSetter value String.toInt, Cmd.none)
 
     PeriodChanged value ->
-      handleInput model model.period periodSetter value String.toInt
+      (handleInput model model.period periodSetter value String.toInt, Cmd.none)
 
     InterestRateChanged value ->
-      handleInput model model.interestRate interestRateSetter value String.toFloat
+      (handleInput model model.interestRate interestRateSetter value String.toFloat, Cmd.none)
 
     EarlyPrincipalChanged value ->
-      handleInput model model.earlyPrincipal earlyPrincipalSetter value String.toInt
+      (handleInput model model.earlyPrincipal earlyPrincipalSetter value String.toInt, Cmd.none)
 
     DepositInterestChanged value ->
-      handleInput model model.depositInterest depositInterestSetter value String.toFloat
+      (handleInput model model.depositInterest depositInterestSetter value String.toFloat, Cmd.none)
 
     DepositCapitalizationChanged value ->
-      handleInput model model.depositCapitalization depositCapitalizationSetter value toCapitalization
+      (handleInput model model.depositCapitalization depositCapitalizationSetter value toCapitalization, Cmd.none)
 
     EarlyPrincipalItemChanged month value ->
       case Array.get (month - 1) model.earlyPrincipalList of
         Just field ->
-          handleInput model field (earlyPrincipalListSetter (month - 1)) value String.toInt
+          (handleInput model field (earlyPrincipalListSetter (month - 1)) value String.toInt, Cmd.none)
         Nothing ->
-          model
+          (model, Cmd.none)
 
 -- VIEW
 
