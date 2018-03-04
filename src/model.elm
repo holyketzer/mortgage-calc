@@ -1,4 +1,14 @@
-module Model exposing (Capitalization(..), FieldType(..), Field, Payment, Deposit, PaymentsTotal, DepositTotal, Model, buildField)
+module Model exposing (
+  Capitalization(..),
+  FieldType(..),
+  Field,
+  Payment,
+  Deposit,
+  PaymentsTotal,
+  DepositTotal,
+  EarlyPrincipalStat,
+  Model,
+  buildField)
 
 import Array exposing (Array)
 import Window
@@ -51,6 +61,12 @@ type alias DepositTotal = {
   total: Float
 }
 
+type alias EarlyPrincipalStat = {
+  earlyPrincipal: Float,
+  effectivePercent: Float,
+  monthCount: Int
+}
+
 type alias Model = {
   windowSize: Window.Size,
   amount: Field Int,
@@ -63,7 +79,8 @@ type alias Model = {
   payments: List Payment,
   total: PaymentsTotal,
   depositHistory: List Deposit,
-  depositTotal: DepositTotal
+  depositTotal: DepositTotal,
+  earlyPrincipalStats: List EarlyPrincipalStat
 }
 
 buildField value kind =

@@ -30921,6 +30921,320 @@ var _myrho$elm_round$Round$roundCom = _myrho$elm_round$Round$roundFun(
 		return (_elm_lang$core$Native_Utils.cmp(dec, 0.5) > -1) ? _elm_lang$core$Basics$ceiling(fl) : ((_elm_lang$core$Native_Utils.cmp(dec, -0.5) < 1) ? _elm_lang$core$Basics$floor(fl) : _elm_lang$core$Basics$round(fl));
 	});
 var _myrho$elm_round$Round$roundNumCom = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$roundCom);
+var _user$project$Charts_LineChart$getRange = F2(
+	function (accessor, model) {
+		var max = function () {
+			var _p0 = _elm_lang$core$List$maximum(
+				A2(_elm_lang$core$List$map, accessor, model));
+			if (_p0.ctor === 'Just') {
+				return _p0._0;
+			} else {
+				return 1;
+			}
+		}();
+		var min = function () {
+			var _p1 = _elm_lang$core$List$minimum(
+				A2(_elm_lang$core$List$map, accessor, model));
+			if (_p1.ctor === 'Just') {
+				return _p1._0;
+			} else {
+				return 0;
+			}
+		}();
+		return {ctor: '_Tuple2', _0: min, _1: max};
+	});
+var _user$project$Charts_LineChart$padding = 30;
+var _user$project$Charts_LineChart$xScale = F2(
+	function (w, range) {
+		return A2(
+			_gampleman$elm_visualization$Visualization_Scale$linear,
+			range,
+			{ctor: '_Tuple2', _0: 0, _1: w - (2 * _user$project$Charts_LineChart$padding)});
+	});
+var _user$project$Charts_LineChart$xAxis = F2(
+	function (model, w) {
+		return A2(
+			_gampleman$elm_visualization$Visualization_Axis$axis,
+			_elm_lang$core$Native_Utils.update(
+				_gampleman$elm_visualization$Visualization_Axis$defaultOptions,
+				{orientation: _gampleman$elm_visualization$Visualization_Axis$Bottom, tickCount: 20}),
+			A2(
+				_user$project$Charts_LineChart$xScale,
+				w,
+				A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$first, model)));
+	});
+var _user$project$Charts_LineChart$yScale = F2(
+	function (h, range) {
+		return A2(
+			_gampleman$elm_visualization$Visualization_Scale$linear,
+			range,
+			{ctor: '_Tuple2', _0: h - (2 * _user$project$Charts_LineChart$padding), _1: 0});
+	});
+var _user$project$Charts_LineChart$yAxis = F2(
+	function (model, h) {
+		return A2(
+			_gampleman$elm_visualization$Visualization_Axis$axis,
+			_elm_lang$core$Native_Utils.update(
+				_gampleman$elm_visualization$Visualization_Axis$defaultOptions,
+				{orientation: _gampleman$elm_visualization$Visualization_Axis$Left, tickCount: 10}),
+			A2(
+				_user$project$Charts_LineChart$yScale,
+				h,
+				A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$second, model)));
+	});
+var _user$project$Charts_LineChart$rightYAxis = F2(
+	function (model, h) {
+		return A2(
+			_gampleman$elm_visualization$Visualization_Axis$axis,
+			_elm_lang$core$Native_Utils.update(
+				_gampleman$elm_visualization$Visualization_Axis$defaultOptions,
+				{orientation: _gampleman$elm_visualization$Visualization_Axis$Right, tickCount: 10}),
+			A2(
+				_user$project$Charts_LineChart$yScale,
+				h,
+				A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$second, model)));
+	});
+var _user$project$Charts_LineChart$transformToLineData = F3(
+	function (model, _p3, _p2) {
+		var _p4 = _p3;
+		var _p5 = _p2;
+		return _elm_lang$core$Maybe$Just(
+			{
+				ctor: '_Tuple2',
+				_0: A2(
+					_gampleman$elm_visualization$Visualization_Scale$convert,
+					A2(
+						_user$project$Charts_LineChart$xScale,
+						_p4.w,
+						A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$first, model)),
+					_p5._0),
+				_1: A2(
+					_gampleman$elm_visualization$Visualization_Scale$convert,
+					A2(
+						_user$project$Charts_LineChart$yScale,
+						_p4.h,
+						A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$second, model)),
+					_p5._1)
+			});
+	});
+var _user$project$Charts_LineChart$line = F2(
+	function (model, size) {
+		return _elm_lang$svg$Svg_Attributes$d(
+			A2(
+				_gampleman$elm_visualization$Visualization_Shape$line,
+				_gampleman$elm_visualization$Visualization_Shape$linearCurve,
+				A2(
+					_elm_lang$core$List$map,
+					A2(_user$project$Charts_LineChart$transformToLineData, model, size),
+					model)));
+	});
+var _user$project$Charts_LineChart$area = F2(
+	function (model, size) {
+		return _elm_lang$svg$Svg_Attributes$d(
+			A2(
+				_gampleman$elm_visualization$Visualization_Shape$line,
+				_gampleman$elm_visualization$Visualization_Shape$linearCurve,
+				A2(
+					_elm_lang$core$List$map,
+					A2(_user$project$Charts_LineChart$transformToLineData, model, size),
+					model)));
+	});
+var _user$project$Charts_LineChart$view = F3(
+	function (lineModel, areaModel, size) {
+		return A2(
+			_elm_lang$svg$Svg$svg,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$width(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(size.w),
+						'px')),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$height(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Basics$toString(size.h),
+							'px')),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$svg$Svg$g,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$transform(
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								'translate(',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding - 1),
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										', ',
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_elm_lang$core$Basics$toString(size.h - _user$project$Charts_LineChart$padding),
+											')'))))),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(_user$project$Charts_LineChart$xAxis, lineModel, size.w),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$svg$Svg$g,
+						{
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$transform(
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'translate(',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding - 1),
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											', ',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+												')'))))),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: A2(_user$project$Charts_LineChart$yAxis, lineModel, size.h),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$g,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$transform(
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'translate(',
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_elm_lang$core$Basics$toString((size.w - _user$project$Charts_LineChart$padding) - 1),
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												', ',
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+													')'))))),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(_user$project$Charts_LineChart$rightYAxis, areaModel, size.h),
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$g,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$transform(
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											'translate(',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													', ',
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+														')'))))),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$class('series'),
+										_1: {ctor: '[]'}
+									}
+								},
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$svg$Svg$path,
+										{
+											ctor: '::',
+											_0: A2(_user$project$Charts_LineChart$area, areaModel, size),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$stroke('green'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$strokeWidth('3px'),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$fill('none'),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$svg$Svg$path,
+											{
+												ctor: '::',
+												_0: A2(_user$project$Charts_LineChart$line, lineModel, size),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$stroke('red'),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$strokeWidth('3px'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$fill('none'),
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											},
+											{ctor: '[]'}),
+										_1: {ctor: '[]'}
+									}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			});
+	});
+var _user$project$Charts_LineChart$render = F3(
+	function (lineModel, areaModel, windowSize) {
+		return A3(
+			_user$project$Charts_LineChart$view,
+			lineModel,
+			areaModel,
+			{
+				w: _elm_lang$core$Basics$toFloat(windowSize.width),
+				h: _elm_lang$core$Basics$toFloat(windowSize.height) / 2
+			});
+	});
+var _user$project$Charts_LineChart$ChartSize = F2(
+	function (a, b) {
+		return {w: a, h: b};
+	});
 var _user$project$Charts_StackedBarChart$translate = F2(
 	function (x, y) {
 		return _elm_lang$svg$Svg_Attributes$transform(
@@ -31229,6 +31543,10 @@ var _user$project$Model$DepositTotal = F2(
 	function (a, b) {
 		return {interest: a, total: b};
 	});
+var _user$project$Model$EarlyPrincipalStat = F3(
+	function (a, b, c) {
+		return {earlyPrincipal: a, effectivePercent: b, monthCount: c};
+	});
 var _user$project$Model$Model = function (a) {
 	return function (b) {
 		return function (c) {
@@ -31241,7 +31559,9 @@ var _user$project$Model$Model = function (a) {
 									return function (j) {
 										return function (k) {
 											return function (l) {
-												return {windowSize: a, amount: b, period: c, interestRate: d, earlyPrincipal: e, depositInterest: f, depositCapitalization: g, earlyPrincipalList: h, payments: i, total: j, depositHistory: k, depositTotal: l};
+												return function (m) {
+													return {windowSize: a, amount: b, period: c, interestRate: d, earlyPrincipal: e, depositInterest: f, depositCapitalization: g, earlyPrincipalList: h, payments: i, total: j, depositHistory: k, depositTotal: l, earlyPrincipalStats: m};
+												};
 											};
 										};
 									};
@@ -31337,6 +31657,26 @@ var _user$project$View$samples = {
 		_1: {ctor: '[]'}
 	}
 };
+var _user$project$View$renderEarlyPrincipalStatChart = F2(
+	function (earlyPrincipalStats, windowSize) {
+		var earlyPrincipalLine = A2(
+			_elm_lang$core$List$map,
+			function (item) {
+				return {
+					ctor: '_Tuple2',
+					_0: item.earlyPrincipal,
+					_1: _elm_lang$core$Basics$toFloat(item.monthCount)
+				};
+			},
+			earlyPrincipalStats);
+		var effectivePercentLine = A2(
+			_elm_lang$core$List$map,
+			function (item) {
+				return {ctor: '_Tuple2', _0: item.earlyPrincipal, _1: item.effectivePercent};
+			},
+			earlyPrincipalStats);
+		return A3(_user$project$Charts_LineChart$render, effectivePercentLine, earlyPrincipalLine, windowSize);
+	});
 var _user$project$View$renderMortgageChart = F2(
 	function (payments, windowSize) {
 		var data = {
@@ -32199,30 +32539,10 @@ var _user$project$View$render = function (model) {
 				_0: A2(_user$project$View$renderMortgageChart, model.payments, model.windowSize),
 				_1: {
 					ctor: '::',
-					_0: A2(_user$project$View$renderInterestComparator, model.total.interestSaved, model.depositTotal.interest),
+					_0: A2(_user$project$View$renderEarlyPrincipalStatChart, model.earlyPrincipalStats, model.windowSize),
 					_1: {
 						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$style(
-									{
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'float', _1: 'left'},
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _user$project$View$renderPaymentsTotal(model.total),
-								_1: {
-									ctor: '::',
-									_0: _user$project$View$renderPayments(model),
-									_1: {ctor: '[]'}
-								}
-							}),
+						_0: A2(_user$project$View$renderInterestComparator, model.total.interestSaved, model.depositTotal.interest),
 						_1: {
 							ctor: '::',
 							_0: A2(
@@ -32233,24 +32553,48 @@ var _user$project$View$render = function (model) {
 										{
 											ctor: '::',
 											_0: {ctor: '_Tuple2', _0: 'float', _1: 'left'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'margin-left', _1: '50px'},
-												_1: {ctor: '[]'}
-											}
+											_1: {ctor: '[]'}
 										}),
 									_1: {ctor: '[]'}
 								},
 								{
 									ctor: '::',
-									_0: _user$project$View$renderDepositTotal(model.depositTotal),
+									_0: _user$project$View$renderPaymentsTotal(model.total),
 									_1: {
 										ctor: '::',
-										_0: _user$project$View$renderDepositHistory(model.depositHistory),
+										_0: _user$project$View$renderPayments(model),
 										_1: {ctor: '[]'}
 									}
 								}),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$div,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'float', _1: 'left'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'margin-left', _1: '50px'},
+													_1: {ctor: '[]'}
+												}
+											}),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _user$project$View$renderDepositTotal(model.depositTotal),
+										_1: {
+											ctor: '::',
+											_0: _user$project$View$renderDepositHistory(model.depositHistory),
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}
 						}
 					}
 				}
@@ -32498,6 +32842,47 @@ var _user$project$Main$paymentsHistory = F2(
 			},
 			loanLefts);
 	});
+var _user$project$Main$effectivePercentPerEarlyPrincipal = F2(
+	function (model, annuity) {
+		var rate = _user$project$Main$monthlyRate(model.interestRate.value);
+		var amount = _elm_lang$core$Basics$toFloat(model.amount.value);
+		var step = function (earlyPrincipal) {
+			return (_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 10000) < 0) ? 500 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 100000) < 0) ? 1000 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 500000) < 0) ? 5000 : 10000));
+		};
+		var getStat = F2(
+			function (prevEarlyPrincipal, res) {
+				getStat:
+				while (true) {
+					if (_elm_lang$core$Native_Utils.cmp(prevEarlyPrincipal, annuity * 3) < 1) {
+						var earlyPrincipal = prevEarlyPrincipal + step(prevEarlyPrincipal);
+						var payments = A2(_user$project$Main$paymentsHistory, model, earlyPrincipal);
+						var monthCount = _elm_lang$core$List$length(payments);
+						var interest = _elm_lang$core$List$sum(
+							A2(
+								_elm_lang$core$List$map,
+								function (_) {
+									return _.interest;
+								},
+								payments));
+						var effectivePercent = _user$project$Shared$roundMoney(
+							A4(_user$project$Main$percentByInterest, amount, rate, interest, monthCount));
+						var item = {earlyPrincipal: earlyPrincipal, effectivePercent: effectivePercent, monthCount: monthCount};
+						var _v15 = earlyPrincipal,
+							_v16 = {ctor: '::', _0: item, _1: res};
+						prevEarlyPrincipal = _v15;
+						res = _v16;
+						continue getStat;
+					} else {
+						return res;
+					}
+				}
+			});
+		return _elm_lang$core$List$reverse(
+			A2(
+				getStat,
+				0,
+				{ctor: '[]'}));
+	});
 var _user$project$Main$toCapitalization = function (value) {
 	var _p4 = value;
 	switch (_p4) {
@@ -32593,70 +32978,78 @@ var _user$project$Main$handleInput = F5(
 			updatedModel.period.value);
 		var deposits = A3(_user$project$Main$getDepositHistory, payments, updatedModel.depositInterest.value, updatedModel.depositCapitalization.value);
 		var depositTotal = _user$project$Main$getDepositTotal(deposits);
+		var earlyPrincipalStats = function () {
+			var _p6 = _elm_lang$core$List$head(payments);
+			if (_p6.ctor === 'Just') {
+				return A2(_user$project$Main$effectivePercentPerEarlyPrincipal, updatedModel, _p6._0.annuity);
+			} else {
+				return {ctor: '[]'};
+			}
+		}();
 		return _elm_lang$core$Native_Utils.update(
 			updatedModel,
-			{payments: payments, total: total, depositHistory: deposits, depositTotal: depositTotal});
+			{payments: payments, total: total, depositHistory: deposits, depositTotal: depositTotal, earlyPrincipalStats: earlyPrincipalStats});
 	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p6 = msg;
-		switch (_p6.ctor) {
+		var _p7 = msg;
+		switch (_p7.ctor) {
 			case 'GetWindowSize':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{windowSize: _p6._0}),
+						{windowSize: _p7._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'AmountChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.amount, _user$project$Main$amountSetter, _p6._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.amount, _user$project$Main$amountSetter, _p7._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'PeriodChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.period, _user$project$Main$periodSetter, _p6._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.period, _user$project$Main$periodSetter, _p7._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'InterestRateChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.interestRate, _user$project$Main$interestRateSetter, _p6._0, _elm_lang$core$String$toFloat),
+					_0: A5(_user$project$Main$handleInput, model, model.interestRate, _user$project$Main$interestRateSetter, _p7._0, _elm_lang$core$String$toFloat),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'EarlyPrincipalChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.earlyPrincipal, _user$project$Main$earlyPrincipalSetter, _p6._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.earlyPrincipal, _user$project$Main$earlyPrincipalSetter, _p7._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DepositInterestChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.depositInterest, _user$project$Main$depositInterestSetter, _p6._0, _elm_lang$core$String$toFloat),
+					_0: A5(_user$project$Main$handleInput, model, model.depositInterest, _user$project$Main$depositInterestSetter, _p7._0, _elm_lang$core$String$toFloat),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DepositCapitalizationChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.depositCapitalization, _user$project$Main$depositCapitalizationSetter, _p6._0, _user$project$Main$toCapitalization),
+					_0: A5(_user$project$Main$handleInput, model, model.depositCapitalization, _user$project$Main$depositCapitalizationSetter, _p7._0, _user$project$Main$toCapitalization),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				var _p8 = _p6._0;
-				var _p7 = A2(_elm_lang$core$Array$get, _p8 - 1, model.earlyPrincipalList);
-				if (_p7.ctor === 'Just') {
+				var _p9 = _p7._0;
+				var _p8 = A2(_elm_lang$core$Array$get, _p9 - 1, model.earlyPrincipalList);
+				if (_p8.ctor === 'Just') {
 					return {
 						ctor: '_Tuple2',
 						_0: A5(
 							_user$project$Main$handleInput,
 							model,
-							_p7._0,
-							_user$project$Main$earlyPrincipalListSetter(_p8 - 1),
-							_p6._1,
+							_p8._0,
+							_user$project$Main$earlyPrincipalListSetter(_p9 - 1),
+							_p7._1,
 							_elm_lang$core$String$toInt),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -32683,7 +33076,8 @@ var _user$project$Main$init = {
 	payments: {ctor: '[]'},
 	total: {principal: 0, interest: 0, month: 0, overpayment: 0, interestSaved: 0, effectivePercent: 0},
 	depositHistory: {ctor: '[]'},
-	depositTotal: {interest: 0, total: 0}
+	depositTotal: {interest: 0, total: 0},
+	earlyPrincipalStats: {ctor: '[]'}
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{
@@ -32703,7 +33097,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 						ctor: '::',
 						_0: A2(
 							_elm_lang$core$Task$perform,
-							function (_p9) {
+							function (_p10) {
 								return _user$project$Events$InterestRateChanged('11.0');
 							},
 							_elm_lang$core$Task$succeed(

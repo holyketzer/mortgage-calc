@@ -4,8 +4,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Round
-import Charts.StackedBarChart
 
+import Charts.LineChart
 import Charts.StackedBarChart
 import Events exposing (..)
 import Model exposing (..)
@@ -168,6 +168,13 @@ renderMortgageChart payments windowSize =
   in
     Charts.StackedBarChart.render data windowSize
 
+renderEarlyPrincipalStatChart earlyPrincipalStats windowSize =
+  let
+    effectivePercentLine = List.map (\item -> (item.earlyPrincipal, item.effectivePercent)) earlyPrincipalStats
+    earlyPrincipalLine = List.map (\item -> (item.earlyPrincipal, toFloat item.monthCount)) earlyPrincipalStats
+  in
+    Charts.LineChart.render effectivePercentLine earlyPrincipalLine windowSize
+
 samples =
   [
     ("Assault", [1, 2, 3, 4, 5, 6, 7]),
@@ -178,6 +185,7 @@ render model =
   div [] [
     mortgageForm model,
     renderMortgageChart model.payments model.windowSize,
+    renderEarlyPrincipalStatChart model.earlyPrincipalStats model.windowSize,
     renderInterestComparator model.total.interestSaved model.depositTotal.interest,
     div [style [("float", "left")]] [
       renderPaymentsTotal model.total,

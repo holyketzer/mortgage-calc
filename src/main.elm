@@ -49,7 +49,8 @@ init =
     depositTotal = {
       interest = 0,
       total = 0
-    }
+    },
+    earlyPrincipalStats = []
   }
 
 -- SUBSCRIPTIONS
@@ -79,8 +80,22 @@ handleInput model field setter newValue converter =
     total = paymentsTotal payments (toFloat updatedModel.amount.value) (monthlyRate updatedModel.interestRate.value) updatedModel.period.value
     deposits = getDepositHistory payments updatedModel.depositInterest.value updatedModel.depositCapitalization.value
     depositTotal = getDepositTotal deposits
+
+    earlyPrincipalStats =
+      case List.head payments of
+        Just payment ->
+          effectivePercentPerEarlyPrincipal updatedModel payment.annuity
+        Nothing ->
+          []
   in (
-    { updatedModel | payments = payments, total = total, depositHistory = deposits, depositTotal = depositTotal }
+    {
+      updatedModel |
+        payments = payments,
+        total = total,
+        depositHistory = deposits,
+        depositTotal = depositTotal,
+        earlyPrincipalStats = earlyPrincipalStats
+    }
   )
 
 amountSetter model value =
@@ -310,6 +325,44 @@ getDepositTotal depositHistory =
       total = total
     }
   )
+
+effectivePercentPerEarlyPrincipal : Model -> Float -> List EarlyPrincipalStat
+effectivePercentPerEarlyPrincipal model annuity =
+  let
+    step earlyPrincipal =
+      if earlyPrincipal < 10000 then
+        500
+      else if earlyPrincipal < 100000 then
+        1000
+      else if earlyPrincipal < 500000 then
+        5000
+      else
+        10000
+
+    amount = toFloat model.amount.value
+    rate = monthlyRate model.interestRate.value
+
+    getStat : Float -> List EarlyPrincipalStat -> List EarlyPrincipalStat
+    getStat prevEarlyPrincipal res =
+      if prevEarlyPrincipal <= annuity * 3 then
+        let
+          earlyPrincipal = prevEarlyPrincipal + (step prevEarlyPrincipal)
+          payments = paymentsHistory model earlyPrincipal
+          monthCount = List.length payments
+          interest = List.sum <| List.map .interest payments
+          effectivePercent = roundMoney <| percentByInterest amount rate interest monthCount
+
+          item = {
+            earlyPrincipal = earlyPrincipal,
+            effectivePercent = effectivePercent,
+            monthCount = monthCount
+          }
+        in
+          getStat earlyPrincipal (item :: res)
+      else
+        res
+  in
+    List.reverse <| getStat 0 []
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
