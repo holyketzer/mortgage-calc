@@ -17,7 +17,7 @@ type alias Range = (Float, Float)
 
 padding : Float
 padding =
-  30
+  60
 
 xScale : Float -> Range -> ContinuousScale
 xScale w range =
@@ -57,15 +57,6 @@ transformToLineData : List(Float, Float) -> ChartSize -> (Float, Float) -> Maybe
 transformToLineData model { w, h } (x, y)  =
     Just(Scale.convert (xScale w (getRange Tuple.first model)) x, Scale.convert (yScale h (getRange Tuple.second model)) y)
 
-
---tranfromToAreaData : ChartSize -> (Float, Float) -> Maybe((Float, Float), (Float, Float))
---tranfromToAreaData { w, h } (x, y) =
---    Just
---        ( ( Scale.convert (xScale w) x, Tuple.first (Scale.rangeExtent (yScale h)) )
---        , ( Scale.convert (xScale w) x, Scale.convert (yScale h) y )
---        )
-
-
 line : List(Float, Float) -> ChartSize -> Attribute msg
 line model size =
     List.map (transformToLineData model size) model
@@ -93,15 +84,14 @@ view lineModel areaModel size =
       [rightYAxis areaModel size.h],
 
     g [transform ("translate(" ++ toString padding ++ ", " ++ toString padding ++ ")"), class "series"] [
-      Svg.path [ area areaModel size, stroke "green", strokeWidth "3px", fill "none" ] [],
-      Svg.path [ line lineModel size, stroke "red", strokeWidth "3px", fill "none" ] []
+      Svg.path [ area areaModel size, stroke "green", strokeWidth "1px", fill "none" ] [],
+      Svg.path [ line lineModel size, stroke "red", strokeWidth "1px", fill "none" ] []
     ]
   ]
 
 -- From here onwards this is simply example boilerplate.
 -- In a real app you would load the data from a server and parse it, perhaps in
 -- a separate module.
-
 
 render lineModel areaModel windowSize =
   view lineModel areaModel { w = toFloat windowSize.width, h = toFloat windowSize.height/2 }

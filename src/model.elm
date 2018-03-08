@@ -41,6 +41,7 @@ type alias Payment = {
 type alias Deposit = {
   deposit: Float,
   interest: Float,
+  interestToCapitalize: Float,
   total: Float,
   month: Int,
   depositInterest: Float,

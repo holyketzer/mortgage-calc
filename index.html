@@ -30921,6 +30921,381 @@ var _myrho$elm_round$Round$roundCom = _myrho$elm_round$Round$roundFun(
 		return (_elm_lang$core$Native_Utils.cmp(dec, 0.5) > -1) ? _elm_lang$core$Basics$ceiling(fl) : ((_elm_lang$core$Native_Utils.cmp(dec, -0.5) < 1) ? _elm_lang$core$Basics$floor(fl) : _elm_lang$core$Basics$round(fl));
 	});
 var _myrho$elm_round$Round$roundNumCom = _myrho$elm_round$Round$funNum(_myrho$elm_round$Round$roundCom);
+var _user$project$Model$buildField = F2(
+	function (value, kind) {
+		return {
+			value: value,
+			raw: _elm_lang$core$Basics$toString(value),
+			error: '',
+			kind: kind
+		};
+	});
+var _user$project$Model$Field = F4(
+	function (a, b, c, d) {
+		return {value: a, raw: b, error: c, kind: d};
+	});
+var _user$project$Model$Payment = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return function (k) {
+											return {period: a, monthlyRate: b, periodicEarlyPrincipal: c, earlyPrincipalList: d, principal: e, interest: f, earlyPrincipal: g, principalBalance: h, month: i, annuity: j, total: k};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var _user$project$Model$Deposit = F7(
+	function (a, b, c, d, e, f, g) {
+		return {deposit: a, interest: b, interestToCapitalize: c, total: d, month: e, depositInterest: f, depositCapitalization: g};
+	});
+var _user$project$Model$PaymentsTotal = F6(
+	function (a, b, c, d, e, f) {
+		return {principal: a, interest: b, month: c, overpayment: d, interestSaved: e, effectivePercent: f};
+	});
+var _user$project$Model$DepositTotal = F2(
+	function (a, b) {
+		return {interest: a, total: b};
+	});
+var _user$project$Model$EarlyPrincipalStat = F3(
+	function (a, b, c) {
+		return {earlyPrincipal: a, effectivePercent: b, monthCount: c};
+	});
+var _user$project$Model$Model = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return function (k) {
+											return function (l) {
+												return function (m) {
+													return {windowSize: a, amount: b, period: c, interestRate: d, earlyPrincipal: e, depositInterest: f, depositCapitalization: g, earlyPrincipalList: h, payments: i, total: j, depositHistory: k, depositTotal: l, earlyPrincipalStats: m};
+												};
+											};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var _user$project$Model$Yearly = {ctor: 'Yearly'};
+var _user$project$Model$Monthly = {ctor: 'Monthly'};
+var _user$project$Model$OptionValue = {ctor: 'OptionValue'};
+var _user$project$Model$TextValue = {ctor: 'TextValue'};
+var _user$project$Model$FloatValue = {ctor: 'FloatValue'};
+var _user$project$Model$IntValue = {ctor: 'IntValue'};
+var _user$project$Shared$roundMoney = function (amount) {
+	return _elm_lang$core$Basics$toFloat(
+		_elm_lang$core$Basics$round(amount * 100)) / 100;
+};
+var _user$project$Calc$getDepositTotal = function (depositHistory) {
+	var lastItem = _elm_lang$core$List$head(
+		_elm_lang$core$List$reverse(depositHistory));
+	var total = function () {
+		var _p0 = lastItem;
+		if (_p0.ctor === 'Just') {
+			return _p0._0.total;
+		} else {
+			return 0;
+		}
+	}();
+	return {
+		interest: _user$project$Shared$roundMoney(
+			_elm_lang$core$List$sum(
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.interest;
+					},
+					depositHistory))),
+		total: total
+	};
+};
+var _user$project$Calc$getDepositHistoryItem = F2(
+	function (payment, prevDeposit) {
+		var newInterest = (_elm_lang$core$Native_Utils.cmp(payment.month, 1) > 0) ? _user$project$Shared$roundMoney(((prevDeposit.total * prevDeposit.depositInterest) / 12) / 100) : 0;
+		var _p1 = function () {
+			var _p2 = prevDeposit.depositCapitalization;
+			if (_p2.ctor === 'Monthly') {
+				return {ctor: '_Tuple2', _0: 0, _1: newInterest};
+			} else {
+				return _elm_lang$core$Native_Utils.eq(
+					A2(_elm_lang$core$Basics_ops['%'], payment.month, 12),
+					0) ? {
+					ctor: '_Tuple2',
+					_0: 0,
+					_1: _user$project$Shared$roundMoney(prevDeposit.interestToCapitalize + newInterest)
+				} : {
+					ctor: '_Tuple2',
+					_0: _user$project$Shared$roundMoney(prevDeposit.interestToCapitalize + newInterest),
+					_1: 0
+				};
+			}
+		}();
+		var interestToCapitalize = _p1._0;
+		var interest = _p1._1;
+		var total = _user$project$Shared$roundMoney((prevDeposit.total + payment.earlyPrincipal) + interest);
+		return {deposit: payment.earlyPrincipal, interest: interest, interestToCapitalize: interestToCapitalize, total: total, month: payment.month, depositInterest: prevDeposit.depositInterest, depositCapitalization: prevDeposit.depositCapitalization};
+	});
+var _user$project$Calc$getDepositHistory = F3(
+	function (paymentsHistory, depositInterest, depositCapitalization) {
+		var initialDeposit = {deposit: 0, interest: 0, interestToCapitalize: 0, total: 0, month: 0, depositInterest: depositInterest, depositCapitalization: depositCapitalization};
+		var deposits = A3(_elm_lang$core$List$scanl, _user$project$Calc$getDepositHistoryItem, initialDeposit, paymentsHistory);
+		return A2(
+			_elm_lang$core$List$filter,
+			function (deposit) {
+				return _elm_lang$core$Native_Utils.cmp(deposit.month, 0) > 0;
+			},
+			deposits);
+	});
+var _user$project$Calc$annuityAmount = F3(
+	function (loanAmount, monthCount, monthlyRate) {
+		return _user$project$Shared$roundMoney(
+			(loanAmount * monthlyRate) / (1 - Math.pow(
+				1 + monthlyRate,
+				_elm_lang$core$Basics$toFloat(0 - monthCount))));
+	});
+var _user$project$Calc$loanStateForMonth = F2(
+	function (index, prevState) {
+		var specificEarlyPrincipal = A2(_elm_lang$core$Array$get, index, prevState.earlyPrincipalList);
+		var currentEarlyPrincipal = function () {
+			var _p3 = specificEarlyPrincipal;
+			if (_p3.ctor === 'Just') {
+				var _p4 = _p3._0;
+				return (_elm_lang$core$Native_Utils.cmp(_p4, 0) > 0) ? _p4 : prevState.periodicEarlyPrincipal;
+			} else {
+				return prevState.periodicEarlyPrincipal;
+			}
+		}();
+		var interestAmount = _user$project$Shared$roundMoney(prevState.principalBalance * prevState.monthlyRate);
+		var payment = A3(_user$project$Calc$annuityAmount, prevState.principalBalance, prevState.period - index, prevState.monthlyRate);
+		var loanAmount = _user$project$Shared$roundMoney(payment - interestAmount);
+		var loanLeftAfterAnnuity = prevState.principalBalance - loanAmount;
+		var earlyPrincipal = _user$project$Shared$roundMoney(
+			A2(_elm_lang$core$Basics$min, loanLeftAfterAnnuity, currentEarlyPrincipal));
+		var loanLeft = _user$project$Shared$roundMoney(loanLeftAfterAnnuity - earlyPrincipal);
+		return {
+			period: prevState.period,
+			monthlyRate: prevState.monthlyRate,
+			periodicEarlyPrincipal: prevState.periodicEarlyPrincipal,
+			earlyPrincipalList: prevState.earlyPrincipalList,
+			principal: loanAmount,
+			interest: interestAmount,
+			earlyPrincipal: earlyPrincipal,
+			principalBalance: loanLeft,
+			month: index + 1,
+			annuity: payment,
+			total: _user$project$Shared$roundMoney((loanAmount + interestAmount) + earlyPrincipal)
+		};
+	});
+var _user$project$Calc$interestAmount = F3(
+	function (amount, monthlyRate, monthCount) {
+		var interestAmountStep = F2(
+			function (index, acc) {
+				var interestAmount = _user$project$Shared$roundMoney(acc.loanLeft * acc.monthlyRate);
+				var payment = _user$project$Shared$roundMoney(
+					A3(_user$project$Calc$annuityAmount, acc.loanLeft, acc.monthCount - index, acc.monthlyRate));
+				var loanAmount = _user$project$Shared$roundMoney(payment - interestAmount);
+				return {loanLeft: acc.loanLeft - loanAmount, totalInterest: acc.totalInterest + interestAmount, monthCount: acc.monthCount, monthlyRate: acc.monthlyRate};
+			});
+		var from = {loanLeft: amount, totalInterest: 0, monthCount: monthCount, monthlyRate: monthlyRate};
+		var res = A3(
+			_elm_lang$core$List$foldl,
+			interestAmountStep,
+			from,
+			A2(_elm_lang$core$List$range, 0, monthCount - 1));
+		return res.totalInterest;
+	});
+var _user$project$Calc$percentByInterest = F4(
+	function (amount, monthlyRate, totalInterest, monthCount) {
+		var percentByInterestLoop = F6(
+			function (amount, monthCount, totalInterest, left, right, delta) {
+				percentByInterestLoop:
+				while (true) {
+					if (_elm_lang$core$Native_Utils.cmp(delta, 10) > 0) {
+						var newCurrent = (right + left) / 2;
+						var newInterest = A3(_user$project$Calc$interestAmount, amount, newCurrent, monthCount);
+						var newDelta = _elm_lang$core$Basics$abs(newInterest - totalInterest);
+						if (_elm_lang$core$Native_Utils.cmp(newInterest, totalInterest) > 0) {
+							var _v3 = amount,
+								_v4 = monthCount,
+								_v5 = totalInterest,
+								_v6 = left,
+								_v7 = newCurrent,
+								_v8 = newDelta;
+							amount = _v3;
+							monthCount = _v4;
+							totalInterest = _v5;
+							left = _v6;
+							right = _v7;
+							delta = _v8;
+							continue percentByInterestLoop;
+						} else {
+							var _v9 = amount,
+								_v10 = monthCount,
+								_v11 = totalInterest,
+								_v12 = newCurrent,
+								_v13 = right,
+								_v14 = newDelta;
+							amount = _v9;
+							monthCount = _v10;
+							totalInterest = _v11;
+							left = _v12;
+							right = _v13;
+							delta = _v14;
+							continue percentByInterestLoop;
+						}
+					} else {
+						return left;
+					}
+				}
+			});
+		var delta = amount;
+		var right = monthlyRate;
+		var left = 0;
+		return (A6(percentByInterestLoop, amount, monthCount, totalInterest, left, right, delta) * 12) * 100;
+	});
+var _user$project$Calc$paymentsTotal = F4(
+	function (payments, amount, monthlyRate, period) {
+		var month = _elm_lang$core$List$length(payments);
+		var interest = _user$project$Shared$roundMoney(
+			_elm_lang$core$List$sum(
+				A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.interest;
+					},
+					payments)));
+		var interestSaved = A3(_user$project$Calc$interestAmount, amount, monthlyRate, period) - interest;
+		var principal = _user$project$Shared$roundMoney(
+			_elm_lang$core$List$sum(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(
+						_elm_lang$core$List$map,
+						function (_) {
+							return _.principal;
+						},
+						payments),
+					A2(
+						_elm_lang$core$List$map,
+						function (_) {
+							return _.earlyPrincipal;
+						},
+						payments))));
+		return {
+			principal: principal,
+			interest: interest,
+			month: month,
+			overpayment: _user$project$Shared$roundMoney((100 * interest) / principal),
+			interestSaved: _user$project$Shared$roundMoney(interestSaved),
+			effectivePercent: _user$project$Shared$roundMoney(
+				A4(_user$project$Calc$percentByInterest, amount, monthlyRate, interest, month))
+		};
+	});
+var _user$project$Calc$monthlyRate = function (interestRate) {
+	return interestRate / (12.0 * 100);
+};
+var _user$project$Calc$initialLoanState = F2(
+	function (model, periodicEarlyPrincipal) {
+		return {
+			period: model.period.value,
+			monthlyRate: _user$project$Calc$monthlyRate(model.interestRate.value),
+			periodicEarlyPrincipal: periodicEarlyPrincipal,
+			earlyPrincipalList: A2(
+				_elm_lang$core$Array$map,
+				function (f) {
+					return _elm_lang$core$Basics$toFloat(f.value);
+				},
+				model.earlyPrincipalList),
+			principal: 0,
+			interest: 0,
+			earlyPrincipal: 0,
+			principalBalance: _elm_lang$core$Basics$toFloat(model.amount.value),
+			month: model.period.value,
+			annuity: 0,
+			total: 0
+		};
+	});
+var _user$project$Calc$paymentsHistory = F2(
+	function (model, periodicEarlyPrincipal) {
+		var monthes = A2(_elm_lang$core$List$range, 0, model.period.value - 1);
+		var loanLefts = A3(
+			_elm_lang$core$List$scanl,
+			_user$project$Calc$loanStateForMonth,
+			A2(_user$project$Calc$initialLoanState, model, periodicEarlyPrincipal),
+			monthes);
+		var loanLeft = model.amount.value;
+		return A2(
+			_elm_lang$core$List$filter,
+			function (p) {
+				return _elm_lang$core$Native_Utils.cmp(p.total, 0) > 0;
+			},
+			loanLefts);
+	});
+var _user$project$Calc$effectivePercentPerEarlyPrincipal = F2(
+	function (model, annuity) {
+		var rate = _user$project$Calc$monthlyRate(model.interestRate.value);
+		var amount = _elm_lang$core$Basics$toFloat(model.amount.value);
+		var step = function (earlyPrincipal) {
+			return (_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 10000) < 0) ? 500 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 100000) < 0) ? 1000 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 500000) < 0) ? 5000 : 10000));
+		};
+		var getStat = F2(
+			function (prevEarlyPrincipal, res) {
+				getStat:
+				while (true) {
+					if (_elm_lang$core$Native_Utils.cmp(prevEarlyPrincipal, annuity * 3) < 1) {
+						var earlyPrincipal = prevEarlyPrincipal + step(prevEarlyPrincipal);
+						var payments = A2(_user$project$Calc$paymentsHistory, model, earlyPrincipal);
+						var monthCount = _elm_lang$core$List$length(payments);
+						var interest = _elm_lang$core$List$sum(
+							A2(
+								_elm_lang$core$List$map,
+								function (_) {
+									return _.interest;
+								},
+								payments));
+						var effectivePercent = _user$project$Shared$roundMoney(
+							A4(_user$project$Calc$percentByInterest, amount, rate, interest, monthCount));
+						var item = {earlyPrincipal: earlyPrincipal, effectivePercent: effectivePercent, monthCount: monthCount};
+						var _v15 = earlyPrincipal,
+							_v16 = {ctor: '::', _0: item, _1: res};
+						prevEarlyPrincipal = _v15;
+						res = _v16;
+						continue getStat;
+					} else {
+						return res;
+					}
+				}
+			});
+		return _elm_lang$core$List$reverse(
+			A2(
+				getStat,
+				0,
+				{ctor: '[]'}));
+	});
 var _user$project$Charts_LineChart$getRange = F2(
 	function (accessor, model) {
 		var max = function () {
@@ -30943,7 +31318,7 @@ var _user$project$Charts_LineChart$getRange = F2(
 		}();
 		return {ctor: '_Tuple2', _0: min, _1: max};
 	});
-var _user$project$Charts_LineChart$padding = 30;
+var _user$project$Charts_LineChart$padding = 60;
 var _user$project$Charts_LineChart$xScale = F2(
 	function (w, range) {
 		return A2(
@@ -31179,7 +31554,7 @@ var _user$project$Charts_LineChart$view = F3(
 												_0: _elm_lang$svg$Svg_Attributes$stroke('green'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$strokeWidth('3px'),
+													_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1px'),
 													_1: {
 														ctor: '::',
 														_0: _elm_lang$svg$Svg_Attributes$fill('none'),
@@ -31201,7 +31576,7 @@ var _user$project$Charts_LineChart$view = F3(
 													_0: _elm_lang$svg$Svg_Attributes$stroke('red'),
 													_1: {
 														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$strokeWidth('3px'),
+														_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1px'),
 														_1: {
 															ctor: '::',
 															_0: _elm_lang$svg$Svg_Attributes$fill('none'),
@@ -31494,95 +31869,6 @@ var _user$project$Events$AmountChanged = function (a) {
 };
 var _user$project$Events$GetWindowSize = function (a) {
 	return {ctor: 'GetWindowSize', _0: a};
-};
-var _user$project$Model$buildField = F2(
-	function (value, kind) {
-		return {
-			value: value,
-			raw: _elm_lang$core$Basics$toString(value),
-			error: '',
-			kind: kind
-		};
-	});
-var _user$project$Model$Field = F4(
-	function (a, b, c, d) {
-		return {value: a, raw: b, error: c, kind: d};
-	});
-var _user$project$Model$Payment = function (a) {
-	return function (b) {
-		return function (c) {
-			return function (d) {
-				return function (e) {
-					return function (f) {
-						return function (g) {
-							return function (h) {
-								return function (i) {
-									return function (j) {
-										return function (k) {
-											return {period: a, monthlyRate: b, periodicEarlyPrincipal: c, earlyPrincipalList: d, principal: e, interest: f, earlyPrincipal: g, principalBalance: h, month: i, annuity: j, total: k};
-										};
-									};
-								};
-							};
-						};
-					};
-				};
-			};
-		};
-	};
-};
-var _user$project$Model$Deposit = F6(
-	function (a, b, c, d, e, f) {
-		return {deposit: a, interest: b, total: c, month: d, depositInterest: e, depositCapitalization: f};
-	});
-var _user$project$Model$PaymentsTotal = F6(
-	function (a, b, c, d, e, f) {
-		return {principal: a, interest: b, month: c, overpayment: d, interestSaved: e, effectivePercent: f};
-	});
-var _user$project$Model$DepositTotal = F2(
-	function (a, b) {
-		return {interest: a, total: b};
-	});
-var _user$project$Model$EarlyPrincipalStat = F3(
-	function (a, b, c) {
-		return {earlyPrincipal: a, effectivePercent: b, monthCount: c};
-	});
-var _user$project$Model$Model = function (a) {
-	return function (b) {
-		return function (c) {
-			return function (d) {
-				return function (e) {
-					return function (f) {
-						return function (g) {
-							return function (h) {
-								return function (i) {
-									return function (j) {
-										return function (k) {
-											return function (l) {
-												return function (m) {
-													return {windowSize: a, amount: b, period: c, interestRate: d, earlyPrincipal: e, depositInterest: f, depositCapitalization: g, earlyPrincipalList: h, payments: i, total: j, depositHistory: k, depositTotal: l, earlyPrincipalStats: m};
-												};
-											};
-										};
-									};
-								};
-							};
-						};
-					};
-				};
-			};
-		};
-	};
-};
-var _user$project$Model$Yearly = {ctor: 'Yearly'};
-var _user$project$Model$Monthly = {ctor: 'Monthly'};
-var _user$project$Model$OptionValue = {ctor: 'OptionValue'};
-var _user$project$Model$TextValue = {ctor: 'TextValue'};
-var _user$project$Model$FloatValue = {ctor: 'FloatValue'};
-var _user$project$Model$IntValue = {ctor: 'IntValue'};
-var _user$project$Shared$roundMoney = function (amount) {
-	return _elm_lang$core$Basics$toFloat(
-		_elm_lang$core$Basics$round(amount * 100)) / 100;
 };
 var _user$project$View$samples = {
 	ctor: '::',
@@ -32604,288 +32890,9 @@ var _user$project$View$render = function (model) {
 var _user$project$Main$view = function (model) {
 	return _user$project$View$render(model);
 };
-var _user$project$Main$getDepositTotal = function (depositHistory) {
-	var lastItem = _elm_lang$core$List$head(
-		_elm_lang$core$List$reverse(depositHistory));
-	var total = function () {
-		var _p0 = lastItem;
-		if (_p0.ctor === 'Just') {
-			return _p0._0.total;
-		} else {
-			return 0;
-		}
-	}();
-	return {
-		interest: _user$project$Shared$roundMoney(
-			_elm_lang$core$List$sum(
-				A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.interest;
-					},
-					depositHistory))),
-		total: total
-	};
-};
-var _user$project$Main$getDepositHistoryItem = F2(
-	function (payment, prevDeposit) {
-		var interest = function () {
-			if (_elm_lang$core$Native_Utils.cmp(payment.month, 1) > 0) {
-				var _p1 = prevDeposit.depositCapitalization;
-				if (_p1.ctor === 'Monthly') {
-					return _user$project$Shared$roundMoney(((prevDeposit.total * prevDeposit.depositInterest) / 12) / 100);
-				} else {
-					return _elm_lang$core$Native_Utils.eq(
-						A2(_elm_lang$core$Basics_ops['%'], payment.month, 12),
-						0) ? _user$project$Shared$roundMoney((prevDeposit.total * prevDeposit.depositInterest) / 100) : 0;
-				}
-			} else {
-				return 0;
-			}
-		}();
-		var total = _user$project$Shared$roundMoney((prevDeposit.total + payment.earlyPrincipal) + interest);
-		return {deposit: payment.earlyPrincipal, interest: interest, total: total, month: payment.month, depositInterest: prevDeposit.depositInterest, depositCapitalization: prevDeposit.depositCapitalization};
-	});
-var _user$project$Main$getDepositHistory = F3(
-	function (paymentsHistory, depositInterest, depositCapitalization) {
-		var initialDeposit = {deposit: 0, interest: 0, total: 0, month: 0, depositInterest: depositInterest, depositCapitalization: depositCapitalization};
-		var deposits = A3(_elm_lang$core$List$scanl, _user$project$Main$getDepositHistoryItem, initialDeposit, paymentsHistory);
-		return A2(
-			_elm_lang$core$List$filter,
-			function (deposit) {
-				return _elm_lang$core$Native_Utils.cmp(deposit.month, 0) > 0;
-			},
-			deposits);
-	});
-var _user$project$Main$annuityAmount = F3(
-	function (loanAmount, monthCount, monthlyRate) {
-		return _user$project$Shared$roundMoney(
-			(loanAmount * monthlyRate) / (1 - Math.pow(
-				1 + monthlyRate,
-				_elm_lang$core$Basics$toFloat(0 - monthCount))));
-	});
-var _user$project$Main$loanStateFor = F2(
-	function (index, prevState) {
-		var specificEarlyPrincipal = A2(_elm_lang$core$Array$get, index, prevState.earlyPrincipalList);
-		var currentEarlyPrincipal = function () {
-			var _p2 = specificEarlyPrincipal;
-			if (_p2.ctor === 'Just') {
-				var _p3 = _p2._0;
-				return (_elm_lang$core$Native_Utils.cmp(_p3, 0) > 0) ? _p3 : prevState.periodicEarlyPrincipal;
-			} else {
-				return prevState.periodicEarlyPrincipal;
-			}
-		}();
-		var interestAmount = _user$project$Shared$roundMoney(prevState.principalBalance * prevState.monthlyRate);
-		var payment = A3(_user$project$Main$annuityAmount, prevState.principalBalance, prevState.period - index, prevState.monthlyRate);
-		var loanAmount = _user$project$Shared$roundMoney(payment - interestAmount);
-		var loanLeftAfterAnnuity = prevState.principalBalance - loanAmount;
-		var earlyPrincipal = _user$project$Shared$roundMoney(
-			A2(_elm_lang$core$Basics$min, loanLeftAfterAnnuity, currentEarlyPrincipal));
-		var loanLeft = _user$project$Shared$roundMoney(loanLeftAfterAnnuity - earlyPrincipal);
-		return {
-			period: prevState.period,
-			monthlyRate: prevState.monthlyRate,
-			periodicEarlyPrincipal: prevState.periodicEarlyPrincipal,
-			earlyPrincipalList: prevState.earlyPrincipalList,
-			principal: loanAmount,
-			interest: interestAmount,
-			earlyPrincipal: earlyPrincipal,
-			principalBalance: loanLeft,
-			month: index + 1,
-			annuity: payment,
-			total: _user$project$Shared$roundMoney((loanAmount + interestAmount) + earlyPrincipal)
-		};
-	});
-var _user$project$Main$interestAmountStep = F2(
-	function (index, acc) {
-		var interestAmount = _user$project$Shared$roundMoney(acc.loanLeft * acc.monthlyRate);
-		var payment = _user$project$Shared$roundMoney(
-			A3(_user$project$Main$annuityAmount, acc.loanLeft, acc.monthCount - index, acc.monthlyRate));
-		var loanAmount = _user$project$Shared$roundMoney(payment - interestAmount);
-		return {loanLeft: acc.loanLeft - loanAmount, totalInterest: acc.totalInterest + interestAmount, monthCount: acc.monthCount, monthlyRate: acc.monthlyRate};
-	});
-var _user$project$Main$interestAmount = F3(
-	function (amount, monthlyRate, monthCount) {
-		var from = {loanLeft: amount, totalInterest: 0, monthCount: monthCount, monthlyRate: monthlyRate};
-		var res = A3(
-			_elm_lang$core$List$foldl,
-			_user$project$Main$interestAmountStep,
-			from,
-			A2(_elm_lang$core$List$range, 0, monthCount - 1));
-		return res.totalInterest;
-	});
-var _user$project$Main$percentByInterestLoop = F6(
-	function (amount, monthCount, totalInterest, left, right, delta) {
-		percentByInterestLoop:
-		while (true) {
-			if (_elm_lang$core$Native_Utils.cmp(delta, 10) > 0) {
-				var newCurrent = (right + left) / 2;
-				var newInterest = A3(_user$project$Main$interestAmount, amount, newCurrent, monthCount);
-				var newDelta = _elm_lang$core$Basics$abs(newInterest - totalInterest);
-				if (_elm_lang$core$Native_Utils.cmp(newInterest, totalInterest) > 0) {
-					var _v3 = amount,
-						_v4 = monthCount,
-						_v5 = totalInterest,
-						_v6 = left,
-						_v7 = newCurrent,
-						_v8 = newDelta;
-					amount = _v3;
-					monthCount = _v4;
-					totalInterest = _v5;
-					left = _v6;
-					right = _v7;
-					delta = _v8;
-					continue percentByInterestLoop;
-				} else {
-					var _v9 = amount,
-						_v10 = monthCount,
-						_v11 = totalInterest,
-						_v12 = newCurrent,
-						_v13 = right,
-						_v14 = newDelta;
-					amount = _v9;
-					monthCount = _v10;
-					totalInterest = _v11;
-					left = _v12;
-					right = _v13;
-					delta = _v14;
-					continue percentByInterestLoop;
-				}
-			} else {
-				return left;
-			}
-		}
-	});
-var _user$project$Main$percentByInterest = F4(
-	function (amount, monthlyRate, totalInterest, monthCount) {
-		var delta = amount;
-		var right = monthlyRate;
-		var left = 0;
-		return (A6(_user$project$Main$percentByInterestLoop, amount, monthCount, totalInterest, left, right, delta) * 12) * 100;
-	});
-var _user$project$Main$paymentsTotal = F4(
-	function (payments, amount, monthlyRate, period) {
-		var month = _elm_lang$core$List$length(payments);
-		var interest = _user$project$Shared$roundMoney(
-			_elm_lang$core$List$sum(
-				A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.interest;
-					},
-					payments)));
-		var interestSaved = A3(_user$project$Main$interestAmount, amount, monthlyRate, period) - interest;
-		var principal = _user$project$Shared$roundMoney(
-			_elm_lang$core$List$sum(
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					A2(
-						_elm_lang$core$List$map,
-						function (_) {
-							return _.principal;
-						},
-						payments),
-					A2(
-						_elm_lang$core$List$map,
-						function (_) {
-							return _.earlyPrincipal;
-						},
-						payments))));
-		return {
-			principal: principal,
-			interest: interest,
-			month: month,
-			overpayment: _user$project$Shared$roundMoney((100 * interest) / principal),
-			interestSaved: _user$project$Shared$roundMoney(interestSaved),
-			effectivePercent: _user$project$Shared$roundMoney(
-				A4(_user$project$Main$percentByInterest, amount, monthlyRate, interest, month))
-		};
-	});
-var _user$project$Main$monthlyRate = function (interestRate) {
-	return interestRate / (12.0 * 100);
-};
-var _user$project$Main$initialLoanState = F2(
-	function (model, periodicEarlyPrincipal) {
-		return {
-			period: model.period.value,
-			monthlyRate: _user$project$Main$monthlyRate(model.interestRate.value),
-			periodicEarlyPrincipal: periodicEarlyPrincipal,
-			earlyPrincipalList: A2(
-				_elm_lang$core$Array$map,
-				function (f) {
-					return _elm_lang$core$Basics$toFloat(f.value);
-				},
-				model.earlyPrincipalList),
-			principal: 0,
-			interest: 0,
-			earlyPrincipal: 0,
-			principalBalance: _elm_lang$core$Basics$toFloat(model.amount.value),
-			month: model.period.value,
-			annuity: 0,
-			total: 0
-		};
-	});
-var _user$project$Main$paymentsHistory = F2(
-	function (model, periodicEarlyPrincipal) {
-		var monthes = A2(_elm_lang$core$List$range, 0, model.period.value - 1);
-		var loanLefts = A3(
-			_elm_lang$core$List$scanl,
-			_user$project$Main$loanStateFor,
-			A2(_user$project$Main$initialLoanState, model, periodicEarlyPrincipal),
-			monthes);
-		var loanLeft = model.amount.value;
-		return A2(
-			_elm_lang$core$List$filter,
-			function (p) {
-				return _elm_lang$core$Native_Utils.cmp(p.total, 0) > 0;
-			},
-			loanLefts);
-	});
-var _user$project$Main$effectivePercentPerEarlyPrincipal = F2(
-	function (model, annuity) {
-		var rate = _user$project$Main$monthlyRate(model.interestRate.value);
-		var amount = _elm_lang$core$Basics$toFloat(model.amount.value);
-		var step = function (earlyPrincipal) {
-			return (_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 10000) < 0) ? 500 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 100000) < 0) ? 1000 : ((_elm_lang$core$Native_Utils.cmp(earlyPrincipal, 500000) < 0) ? 5000 : 10000));
-		};
-		var getStat = F2(
-			function (prevEarlyPrincipal, res) {
-				getStat:
-				while (true) {
-					if (_elm_lang$core$Native_Utils.cmp(prevEarlyPrincipal, annuity * 3) < 1) {
-						var earlyPrincipal = prevEarlyPrincipal + step(prevEarlyPrincipal);
-						var payments = A2(_user$project$Main$paymentsHistory, model, earlyPrincipal);
-						var monthCount = _elm_lang$core$List$length(payments);
-						var interest = _elm_lang$core$List$sum(
-							A2(
-								_elm_lang$core$List$map,
-								function (_) {
-									return _.interest;
-								},
-								payments));
-						var effectivePercent = _user$project$Shared$roundMoney(
-							A4(_user$project$Main$percentByInterest, amount, rate, interest, monthCount));
-						var item = {earlyPrincipal: earlyPrincipal, effectivePercent: effectivePercent, monthCount: monthCount};
-						var _v15 = earlyPrincipal,
-							_v16 = {ctor: '::', _0: item, _1: res};
-						prevEarlyPrincipal = _v15;
-						res = _v16;
-						continue getStat;
-					} else {
-						return res;
-					}
-				}
-			});
-		return _elm_lang$core$List$reverse(
-			A2(
-				getStat,
-				0,
-				{ctor: '[]'}));
-	});
 var _user$project$Main$toCapitalization = function (value) {
-	var _p4 = value;
-	switch (_p4) {
+	var _p0 = value;
+	switch (_p0) {
 		case 'Yearly':
 			return _elm_lang$core$Result$Ok(_user$project$Model$Yearly);
 		case 'Monthly':
@@ -32953,35 +32960,35 @@ var _user$project$Main$setFieldValue = F3(
 var _user$project$Main$handleInput = F5(
 	function (model, field, setter, newValue, converter) {
 		var updatedModel = function () {
-			var _p5 = converter(newValue);
-			if (_p5.ctor === 'Ok') {
+			var _p1 = converter(newValue);
+			if (_p1.ctor === 'Ok') {
 				return A2(
 					setter,
 					model,
-					A3(_user$project$Main$setFieldValue, _p5._0, newValue, field));
+					A3(_user$project$Main$setFieldValue, _p1._0, newValue, field));
 			} else {
 				return A2(
 					setter,
 					model,
-					A3(_user$project$Main$setFieldError, _p5._0, newValue, field));
+					A3(_user$project$Main$setFieldError, _p1._0, newValue, field));
 			}
 		}();
 		var payments = A2(
-			_user$project$Main$paymentsHistory,
+			_user$project$Calc$paymentsHistory,
 			updatedModel,
 			_elm_lang$core$Basics$toFloat(updatedModel.earlyPrincipal.value));
 		var total = A4(
-			_user$project$Main$paymentsTotal,
+			_user$project$Calc$paymentsTotal,
 			payments,
 			_elm_lang$core$Basics$toFloat(updatedModel.amount.value),
-			_user$project$Main$monthlyRate(updatedModel.interestRate.value),
+			_user$project$Calc$monthlyRate(updatedModel.interestRate.value),
 			updatedModel.period.value);
-		var deposits = A3(_user$project$Main$getDepositHistory, payments, updatedModel.depositInterest.value, updatedModel.depositCapitalization.value);
-		var depositTotal = _user$project$Main$getDepositTotal(deposits);
+		var deposits = A3(_user$project$Calc$getDepositHistory, payments, updatedModel.depositInterest.value, updatedModel.depositCapitalization.value);
+		var depositTotal = _user$project$Calc$getDepositTotal(deposits);
 		var earlyPrincipalStats = function () {
-			var _p6 = _elm_lang$core$List$head(payments);
-			if (_p6.ctor === 'Just') {
-				return A2(_user$project$Main$effectivePercentPerEarlyPrincipal, updatedModel, _p6._0.annuity);
+			var _p2 = _elm_lang$core$List$head(payments);
+			if (_p2.ctor === 'Just') {
+				return A2(_user$project$Calc$effectivePercentPerEarlyPrincipal, updatedModel, _p2._0.annuity);
 			} else {
 				return {ctor: '[]'};
 			}
@@ -32992,64 +32999,64 @@ var _user$project$Main$handleInput = F5(
 	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p7 = msg;
-		switch (_p7.ctor) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'GetWindowSize':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{windowSize: _p7._0}),
+						{windowSize: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'AmountChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.amount, _user$project$Main$amountSetter, _p7._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.amount, _user$project$Main$amountSetter, _p3._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'PeriodChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.period, _user$project$Main$periodSetter, _p7._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.period, _user$project$Main$periodSetter, _p3._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'InterestRateChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.interestRate, _user$project$Main$interestRateSetter, _p7._0, _elm_lang$core$String$toFloat),
+					_0: A5(_user$project$Main$handleInput, model, model.interestRate, _user$project$Main$interestRateSetter, _p3._0, _elm_lang$core$String$toFloat),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'EarlyPrincipalChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.earlyPrincipal, _user$project$Main$earlyPrincipalSetter, _p7._0, _elm_lang$core$String$toInt),
+					_0: A5(_user$project$Main$handleInput, model, model.earlyPrincipal, _user$project$Main$earlyPrincipalSetter, _p3._0, _elm_lang$core$String$toInt),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DepositInterestChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.depositInterest, _user$project$Main$depositInterestSetter, _p7._0, _elm_lang$core$String$toFloat),
+					_0: A5(_user$project$Main$handleInput, model, model.depositInterest, _user$project$Main$depositInterestSetter, _p3._0, _elm_lang$core$String$toFloat),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DepositCapitalizationChanged':
 				return {
 					ctor: '_Tuple2',
-					_0: A5(_user$project$Main$handleInput, model, model.depositCapitalization, _user$project$Main$depositCapitalizationSetter, _p7._0, _user$project$Main$toCapitalization),
+					_0: A5(_user$project$Main$handleInput, model, model.depositCapitalization, _user$project$Main$depositCapitalizationSetter, _p3._0, _user$project$Main$toCapitalization),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				var _p9 = _p7._0;
-				var _p8 = A2(_elm_lang$core$Array$get, _p9 - 1, model.earlyPrincipalList);
-				if (_p8.ctor === 'Just') {
+				var _p5 = _p3._0;
+				var _p4 = A2(_elm_lang$core$Array$get, _p5 - 1, model.earlyPrincipalList);
+				if (_p4.ctor === 'Just') {
 					return {
 						ctor: '_Tuple2',
 						_0: A5(
 							_user$project$Main$handleInput,
 							model,
-							_p8._0,
-							_user$project$Main$earlyPrincipalListSetter(_p9 - 1),
-							_p7._1,
+							_p4._0,
+							_user$project$Main$earlyPrincipalListSetter(_p5 - 1),
+							_p3._1,
 							_elm_lang$core$String$toInt),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -33097,7 +33104,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 						ctor: '::',
 						_0: A2(
 							_elm_lang$core$Task$perform,
-							function (_p10) {
+							function (_p6) {
 								return _user$project$Events$InterestRateChanged('11.0');
 							},
 							_elm_lang$core$Task$succeed(
