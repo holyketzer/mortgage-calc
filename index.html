@@ -31642,25 +31642,125 @@ var _user$project$Charts_StackedBarChart$colors = function (size) {
 		}
 	};
 };
-var _user$project$Charts_StackedBarChart$column = F2(
-	function (xScale, _p0) {
+var _user$project$Charts_StackedBarChart$column = F3(
+	function (labels, xScale, _p0) {
 		var _p1 = _p0;
-		var _p5 = _p1._1;
+		var _p9 = _p1._1;
+		var _p8 = _p1._2;
+		var hintTules = A4(
+			_elm_lang$core$List$map3,
+			F3(
+				function (v0, v1, v2) {
+					return {ctor: '_Tuple3', _0: v0, _1: v1, _2: v2};
+				}),
+			labels,
+			_p8,
+			_user$project$Charts_StackedBarChart$colors(
+				_elm_lang$core$List$length(_p8)));
+		var hintValues = A2(
+			_elm_lang$core$List$indexedMap,
+			F2(
+				function (v0, v1) {
+					return {ctor: '_Tuple2', _0: v0, _1: v1};
+				}),
+			_elm_lang$core$List$reverse(hintTules));
+		var maxHintWidth = 150;
+		var lineStep = 17;
+		var xPos = A2(_gampleman$elm_visualization$Visualization_Scale$convert, xScale, _p1._0);
+		var xHintPos = A2(
+			_elm_lang$core$Basics$min,
+			xPos,
+			_elm_lang$core$Tuple$second(
+				_gampleman$elm_visualization$Visualization_Scale$range(xScale)) - maxHintWidth);
+		var hintLine = function (_p2) {
+			var _p3 = _p2;
+			var _p4 = _p3._0;
+			return A2(
+				_elm_lang$svg$Svg$g,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$class('hint'),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: A2(
+						_elm_lang$svg$Svg$rect,
+						{
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x(
+								_elm_lang$core$Basics$toString(xHintPos)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y(
+									_elm_lang$core$Basics$toString((_p4 * lineStep) - 12)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$width('14'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$height('14'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$fill(_p3._1._2),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							}
+						},
+						{ctor: '[]'}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$text_,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$x(
+									_elm_lang$core$Basics$toString(xHintPos + lineStep)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$y(
+										_elm_lang$core$Basics$toString(_p4 * lineStep)),
+									_1: {ctor: '[]'}
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg$text(
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_p3._1._0,
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											': ',
+											_elm_lang$core$Basics$toString(
+												_user$project$Shared$roundMoney(_p3._1._1._1 - _p3._1._1._0))))),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				});
+		};
+		var hint = A2(_elm_lang$core$List$map, hintLine, hintValues);
 		var block = F2(
-			function (color, _p2) {
-				var _p3 = _p2;
-				var _p4 = _p3._1;
+			function (color, _p5) {
+				var _p6 = _p5;
+				var _p7 = _p6._1;
 				return A2(
 					_elm_lang$svg$Svg$rect,
 					{
 						ctor: '::',
 						_0: _elm_lang$svg$Svg_Attributes$x(
-							_elm_lang$core$Basics$toString(
-								A2(_gampleman$elm_visualization$Visualization_Scale$convert, xScale, _p1._0))),
+							_elm_lang$core$Basics$toString(xPos)),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$svg$Svg_Attributes$y(
-								_elm_lang$core$Basics$toString(_p4)),
+								_elm_lang$core$Basics$toString(_p7)),
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$svg$Svg_Attributes$width(
@@ -31670,7 +31770,7 @@ var _user$project$Charts_StackedBarChart$column = F2(
 									ctor: '::',
 									_0: _elm_lang$svg$Svg_Attributes$height(
 										_elm_lang$core$Basics$toString(
-											_elm_lang$core$Basics$abs(_p3._0 - _p4))),
+											_elm_lang$core$Basics$abs(_p6._0 - _p7))),
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$svg$Svg_Attributes$fill(color),
@@ -31689,12 +31789,15 @@ var _user$project$Charts_StackedBarChart$column = F2(
 				_0: _elm_lang$svg$Svg_Attributes$class('column'),
 				_1: {ctor: '[]'}
 			},
-			A3(
-				_elm_lang$core$List$map2,
-				block,
-				_user$project$Charts_StackedBarChart$colors(
-					_elm_lang$core$List$length(_p5)),
-				_p5));
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				hint,
+				A3(
+					_elm_lang$core$List$map2,
+					block,
+					_user$project$Charts_StackedBarChart$colors(
+						_elm_lang$core$List$length(_p9)),
+					_p9)));
 	});
 var _user$project$Charts_StackedBarChart$config = function (data) {
 	return {
@@ -31707,12 +31810,12 @@ var _user$project$Charts_StackedBarChart$config = function (data) {
 };
 var _user$project$Charts_StackedBarChart$padding = {top: 30, left: 60, right: 30, bottom: 60};
 var _user$project$Charts_StackedBarChart$view = F2(
-	function (_p6, windowSize) {
-		var _p7 = _p6;
+	function (_p10, windowSize) {
+		var _p11 = _p10;
 		var axisOptions = _gampleman$elm_visualization$Visualization_Axis$defaultOptions;
-		var _p8 = _p7.extent;
-		var minY = _p8._0;
-		var maxY = _p8._1;
+		var _p12 = _p11.extent;
+		var minY = _p12._0;
+		var maxY = _p12._1;
 		var fixedExtent = _elm_lang$core$Native_Utils.eq(minY, maxY) ? {ctor: '_Tuple2', _0: minY, _1: minY + 1} : {ctor: '_Tuple2', _0: minY, _1: maxY};
 		var yScale = A3(
 			_elm_lang$core$Basics$flip,
@@ -31728,7 +31831,7 @@ var _user$project$Charts_StackedBarChart$view = F2(
 				axisOptions,
 				{orientation: _gampleman$elm_visualization$Visualization_Axis$Left}),
 			yScale);
-		var yearValues = _elm_community$list_extra$List_Extra$transpose(_p7.values);
+		var yearValues = _elm_community$list_extra$List_Extra$transpose(_p11.values);
 		var years = A2(
 			_elm_lang$core$List$range,
 			1,
@@ -31749,12 +31852,12 @@ var _user$project$Charts_StackedBarChart$view = F2(
 		var scaledValues = A2(
 			_elm_lang$core$List$map,
 			_elm_lang$core$List$map(
-				function (_p9) {
-					var _p10 = _p9;
+				function (_p13) {
+					var _p14 = _p13;
 					return {
 						ctor: '_Tuple2',
-						_0: A2(_gampleman$elm_visualization$Visualization_Scale$convert, yScale, _p10._0),
-						_1: A2(_gampleman$elm_visualization$Visualization_Scale$convert, yScale, _p10._1)
+						_0: A2(_gampleman$elm_visualization$Visualization_Scale$convert, yScale, _p14._0),
+						_1: A2(_gampleman$elm_visualization$Visualization_Scale$convert, yScale, _p14._1)
 					};
 				}),
 			yearValues);
@@ -31780,15 +31883,11 @@ var _user$project$Charts_StackedBarChart$view = F2(
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$svg$Svg$g,
+					_elm_lang$svg$Svg$style,
+					{ctor: '[]'},
 					{
 						ctor: '::',
-						_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left - 1, windowSize.height - _user$project$Charts_StackedBarChart$padding.bottom),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: xAxis,
+						_0: _elm_lang$svg$Svg$text('\n          .column .hint { display: none; }\n          .column:hover .hint { display: inline; }\n        '),
 						_1: {ctor: '[]'}
 					}),
 				_1: {
@@ -31797,12 +31896,12 @@ var _user$project$Charts_StackedBarChart$view = F2(
 						_elm_lang$svg$Svg$g,
 						{
 							ctor: '::',
-							_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left - 1, _user$project$Charts_StackedBarChart$padding.top),
+							_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left - 1, windowSize.height - _user$project$Charts_StackedBarChart$padding.bottom),
 							_1: {ctor: '[]'}
 						},
 						{
 							ctor: '::',
-							_0: yAxis,
+							_0: xAxis,
 							_1: {ctor: '[]'}
 						}),
 					_1: {
@@ -31811,39 +31910,54 @@ var _user$project$Charts_StackedBarChart$view = F2(
 							_elm_lang$svg$Svg$g,
 							{
 								ctor: '::',
-								_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left, _user$project$Charts_StackedBarChart$padding.top),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$class('series'),
-									_1: {ctor: '[]'}
-								}
+								_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left - 1, _user$project$Charts_StackedBarChart$padding.top),
+								_1: {ctor: '[]'}
 							},
-							A2(
-								_elm_lang$core$List$map,
-								_user$project$Charts_StackedBarChart$column(xScale),
-								A3(
-									_elm_lang$core$List$map2,
-									F2(
-										function (v0, v1) {
-											return {ctor: '_Tuple2', _0: v0, _1: v1};
-										}),
-									years,
-									scaledValues))),
-						_1: {ctor: '[]'}
+							{
+								ctor: '::',
+								_0: yAxis,
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$g,
+								{
+									ctor: '::',
+									_0: A2(_user$project$Charts_StackedBarChart$translate, _user$project$Charts_StackedBarChart$padding.left, _user$project$Charts_StackedBarChart$padding.top),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$class('series'),
+										_1: {ctor: '[]'}
+									}
+								},
+								A2(
+									_elm_lang$core$List$map,
+									A2(_user$project$Charts_StackedBarChart$column, _p11.labels, xScale),
+									A4(
+										_elm_lang$core$List$map3,
+										F3(
+											function (v0, v1, v2) {
+												return {ctor: '_Tuple3', _0: v0, _1: v1, _2: v2};
+											}),
+										years,
+										scaledValues,
+										yearValues))),
+							_1: {ctor: '[]'}
+						}
 					}
 				}
 			});
 	});
 var _user$project$Charts_StackedBarChart$render = F2(
 	function (data, windowSize) {
-		return A2(
-			_user$project$Charts_StackedBarChart$view,
-			_gampleman$elm_visualization$Visualization_Shape$stack(
-				_user$project$Charts_StackedBarChart$config(data)),
-			{
-				width: _elm_lang$core$Basics$toFloat(windowSize.width),
-				height: _elm_lang$core$Basics$toFloat(windowSize.height) / 2
-			});
+		var size = {
+			width: _elm_lang$core$Basics$toFloat(windowSize.width),
+			height: _elm_lang$core$Basics$toFloat(windowSize.height) / 2
+		};
+		var stackedData = _gampleman$elm_visualization$Visualization_Shape$stack(
+			_user$project$Charts_StackedBarChart$config(data));
+		return A2(_user$project$Charts_StackedBarChart$view, stackedData, size);
 	});
 var _user$project$Events$DepositCapitalizationChanged = function (a) {
 	return {ctor: 'DepositCapitalizationChanged', _0: a};
