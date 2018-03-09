@@ -172,8 +172,9 @@ renderEarlyPrincipalStatChart earlyPrincipalStats windowSize =
   let
     effectivePercentLine = List.map (\item -> (item.earlyPrincipal, item.effectivePercent)) earlyPrincipalStats
     earlyPrincipalLine = List.map (\item -> (item.earlyPrincipal, toFloat item.monthCount)) earlyPrincipalStats
+    labels = ("Equivalent percent", "Month count")
   in
-    Charts.LineChart.render effectivePercentLine earlyPrincipalLine windowSize
+    Charts.LineChart.render effectivePercentLine earlyPrincipalLine windowSize labels
 
 samples =
   [

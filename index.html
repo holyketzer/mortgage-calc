@@ -31414,8 +31414,194 @@ var _user$project$Charts_LineChart$area = F2(
 					A2(_user$project$Charts_LineChart$transformToLineData, model, size),
 					model)));
 	});
-var _user$project$Charts_LineChart$view = F3(
-	function (lineModel, areaModel, size) {
+var _user$project$Charts_LineChart$view = F4(
+	function (lineModel, areaModel, size, labels) {
+		var showHint = function (_p6) {
+			var _p7 = _p6;
+			var scale = A2(
+				_user$project$Charts_LineChart$xScale,
+				size.w,
+				A2(_user$project$Charts_LineChart$getRange, _elm_lang$core$Tuple$first, lineModel));
+			var xPos = A2(_gampleman$elm_visualization$Visualization_Scale$convert, scale, _p7._0._0);
+			var maxHintWidth = 150;
+			var xHintPos = A2(
+				_elm_lang$core$Basics$min,
+				xPos,
+				_elm_lang$core$Tuple$second(
+					_gampleman$elm_visualization$Visualization_Scale$range(scale)) - maxHintWidth);
+			var lineStep = 17;
+			var hintLine = F4(
+				function (index, label, value, color) {
+					return A2(
+						_elm_lang$svg$Svg$g,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$svg$Svg$rect,
+								{
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$x(
+										_elm_lang$core$Basics$toString(xHintPos)),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$y(
+											_elm_lang$core$Basics$toString((index * lineStep) - 12)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$width('14'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$height('14'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$fill(color),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$stroke('black'),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
+										}
+									}
+								},
+								{ctor: '[]'}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$text_,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$x(
+											_elm_lang$core$Basics$toString(xHintPos + lineStep)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$y(
+												_elm_lang$core$Basics$toString(index * lineStep)),
+											_1: {ctor: '[]'}
+										}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg$text(
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												label,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													': ',
+													_elm_lang$core$Basics$toString(value)))),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
+						});
+				});
+			return A2(
+				_elm_lang$svg$Svg$g,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$class('hintHost'),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: A2(
+						_elm_lang$svg$Svg$rect,
+						{
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$x(
+								_elm_lang$core$Basics$toString(xPos)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$y('0'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$width('20'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$height(
+											_elm_lang$core$Basics$toString(size.h - (2 * _user$project$Charts_LineChart$padding))),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.0'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						},
+						{ctor: '[]'}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$g,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$class('hint'),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$rect,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$x(
+											_elm_lang$core$Basics$toString(xPos)),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$svg$Svg_Attributes$y('0'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$svg$Svg_Attributes$width('1'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$svg$Svg_Attributes$height(
+														_elm_lang$core$Basics$toString(size.h - (2 * _user$project$Charts_LineChart$padding))),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.3'),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
+										}
+									},
+									{ctor: '[]'}),
+								_1: {
+									ctor: '::',
+									_0: A4(
+										hintLine,
+										-1,
+										_elm_lang$core$Tuple$first(labels),
+										_p7._0._1,
+										'green'),
+									_1: {
+										ctor: '::',
+										_0: A4(
+											hintLine,
+											0,
+											_elm_lang$core$Tuple$second(labels),
+											_p7._1._1,
+											'red'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}),
+						_1: {ctor: '[]'}
+					}
+				});
+		};
+		var hintData = A3(
+			_elm_lang$core$List$map2,
+			F2(
+				function (v0, v1) {
+					return {ctor: '_Tuple2', _0: v0, _1: v1};
+				}),
+			lineModel,
+			areaModel);
 		return A2(
 			_elm_lang$svg$Svg$svg,
 			{
@@ -31438,28 +31624,11 @@ var _user$project$Charts_LineChart$view = F3(
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$svg$Svg$g,
+					_elm_lang$svg$Svg$style,
+					{ctor: '[]'},
 					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$transform(
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								'translate(',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding - 1),
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										', ',
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											_elm_lang$core$Basics$toString(size.h - _user$project$Charts_LineChart$padding),
-											')'))))),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: A2(_user$project$Charts_LineChart$xAxis, lineModel, size.w),
+						_0: _elm_lang$svg$Svg$text('\n          .hintHost .hint { display: none; }\n          .hintHost:hover .hint { display: inline; }\n        '),
 						_1: {ctor: '[]'}
 					}),
 				_1: {
@@ -31480,13 +31649,13 @@ var _user$project$Charts_LineChart$view = F3(
 											', ',
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+												_elm_lang$core$Basics$toString(size.h - _user$project$Charts_LineChart$padding),
 												')'))))),
 							_1: {ctor: '[]'}
 						},
 						{
 							ctor: '::',
-							_0: A2(_user$project$Charts_LineChart$yAxis, lineModel, size.h),
+							_0: A2(_user$project$Charts_LineChart$xAxis, lineModel, size.w),
 							_1: {ctor: '[]'}
 						}),
 					_1: {
@@ -31501,7 +31670,7 @@ var _user$project$Charts_LineChart$view = F3(
 										'translate(',
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											_elm_lang$core$Basics$toString((size.w - _user$project$Charts_LineChart$padding) - 1),
+											_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding - 1),
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												', ',
@@ -31513,7 +31682,7 @@ var _user$project$Charts_LineChart$view = F3(
 							},
 							{
 								ctor: '::',
-								_0: A2(_user$project$Charts_LineChart$rightYAxis, areaModel, size.h),
+								_0: A2(_user$project$Charts_LineChart$yAxis, lineModel, size.h),
 								_1: {ctor: '[]'}
 							}),
 						_1: {
@@ -31528,7 +31697,7 @@ var _user$project$Charts_LineChart$view = F3(
 											'translate(',
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+												_elm_lang$core$Basics$toString((size.w - _user$project$Charts_LineChart$padding) - 1),
 												A2(
 													_elm_lang$core$Basics_ops['++'],
 													', ',
@@ -31536,35 +31705,40 @@ var _user$project$Charts_LineChart$view = F3(
 														_elm_lang$core$Basics_ops['++'],
 														_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
 														')'))))),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$svg$Svg_Attributes$class('series'),
-										_1: {ctor: '[]'}
-									}
+									_1: {ctor: '[]'}
 								},
 								{
 									ctor: '::',
-									_0: A2(
-										_elm_lang$svg$Svg$path,
-										{
+									_0: A2(_user$project$Charts_LineChart$rightYAxis, areaModel, size.h),
+									_1: {ctor: '[]'}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$svg$Svg$g,
+									{
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$transform(
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												'translate(',
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														', ',
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															_elm_lang$core$Basics$toString(_user$project$Charts_LineChart$padding),
+															')'))))),
+										_1: {
 											ctor: '::',
-											_0: A2(_user$project$Charts_LineChart$area, areaModel, size),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$stroke('green'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1px'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$svg$Svg_Attributes$fill('none'),
-														_1: {ctor: '[]'}
-													}
-												}
-											}
-										},
-										{ctor: '[]'}),
-									_1: {
+											_0: _elm_lang$svg$Svg_Attributes$class('series'),
+											_1: {ctor: '[]'}
+										}
+									},
+									{
 										ctor: '::',
 										_0: A2(
 											_elm_lang$svg$Svg$path,
@@ -31586,25 +31760,56 @@ var _user$project$Charts_LineChart$view = F3(
 												}
 											},
 											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$svg$Svg$path,
+												{
+													ctor: '::',
+													_0: A2(_user$project$Charts_LineChart$area, areaModel, size),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$svg$Svg_Attributes$stroke('green'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$svg$Svg_Attributes$strokeWidth('1px'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$svg$Svg_Attributes$fill('none'),
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												},
+												{ctor: '[]'}),
+											_1: {
+												ctor: '::',
+												_0: A2(
+													_elm_lang$svg$Svg$g,
+													{ctor: '[]'},
+													A2(_elm_lang$core$List$map, showHint, hintData)),
+												_1: {ctor: '[]'}
+											}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}
 						}
 					}
 				}
 			});
 	});
-var _user$project$Charts_LineChart$render = F3(
-	function (lineModel, areaModel, windowSize) {
-		return A3(
+var _user$project$Charts_LineChart$render = F4(
+	function (lineModel, areaModel, windowSize, labels) {
+		return A4(
 			_user$project$Charts_LineChart$view,
 			lineModel,
 			areaModel,
 			{
 				w: _elm_lang$core$Basics$toFloat(windowSize.width),
 				h: _elm_lang$core$Basics$toFloat(windowSize.height) / 2
-			});
+			},
+			labels);
 	});
 var _user$project$Charts_LineChart$ChartSize = F2(
 	function (a, b) {
@@ -32059,6 +32264,7 @@ var _user$project$View$samples = {
 };
 var _user$project$View$renderEarlyPrincipalStatChart = F2(
 	function (earlyPrincipalStats, windowSize) {
+		var labels = {ctor: '_Tuple2', _0: 'Equivalent percent', _1: 'Month count'};
 		var earlyPrincipalLine = A2(
 			_elm_lang$core$List$map,
 			function (item) {
@@ -32075,7 +32281,7 @@ var _user$project$View$renderEarlyPrincipalStatChart = F2(
 				return {ctor: '_Tuple2', _0: item.earlyPrincipal, _1: item.effectivePercent};
 			},
 			earlyPrincipalStats);
-		return A3(_user$project$Charts_LineChart$render, effectivePercentLine, earlyPrincipalLine, windowSize);
+		return A4(_user$project$Charts_LineChart$render, effectivePercentLine, earlyPrincipalLine, windowSize, labels);
 	});
 var _user$project$View$renderMortgageChart = F2(
 	function (payments, windowSize) {
