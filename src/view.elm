@@ -176,14 +176,21 @@ renderEarlyPrincipalStatChart earlyPrincipalStats windowSize =
   in
     Charts.LineChart.render effectivePercentLine earlyPrincipalLine windowSize labels
 
-samples =
-  [
-    ("Assault", [1, 2, 3, 4, 5, 6, 7]),
-    ("Robbery", [3, 5, 4, 3, 5, 4, 2])
-  ]
+stylesheet path =
+  let
+    tag = "link"
+    attrs = [
+      attribute "rel" "stylesheet",
+      attribute "property" "stylesheet",
+      attribute "href" path
+    ]
+    children = []
+  in
+    node tag attrs children
 
 render model =
   div [] [
+    stylesheet "/main.css",
     mortgageForm model,
     renderMortgageChart model.payments model.windowSize,
     renderEarlyPrincipalStatChart model.earlyPrincipalStats model.windowSize,

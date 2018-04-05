@@ -1,0 +1,12 @@
+tr {
+  height: 22px;
+}
+
+th {
+  white-space: nowrap;
+}
+
+td {
+  width: 80px;
+  text-align: center;
+}
