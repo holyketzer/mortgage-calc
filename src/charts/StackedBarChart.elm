@@ -60,7 +60,7 @@ column labels xScale (year, values, originalValues) =
       ] []
 
     lineStep = 17
-    maxHintWidth = 150
+    maxHintWidth = 200
     hintTules = List.map3 (,,) labels originalValues (colors <| List.length originalValues)
     hintValues = List.indexedMap (,) <| List.reverse <| hintTules
 

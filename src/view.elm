@@ -30,17 +30,20 @@ selectField field msg label options =
     text (" " ++ field.error)
   ]
 
-someToOption x current =
-  option [value (toString x), selected (x == current)] [text (toString x)]
+someToOption (x, label) current =
+  option [value (toString x), selected (x == current)] [text label]
 
 mortgageForm model =
   div [] [
-    inputField model.amount AmountChanged "Amount",
-    inputField model.period PeriodChanged "Period",
-    inputField model.interestRate InterestRateChanged "Interest rate",
-    inputField model.earlyPrincipal EarlyPrincipalChanged "Early principal",
-    inputField model.depositInterest DepositInterestChanged "Desposit interest",
-    selectField model.depositCapitalization DepositCapitalizationChanged "Deposit capitalization" [Monthly, Yearly]
+    inputField model.amount AmountChanged "Кредит",
+    inputField model.period PeriodChanged "Период (мес.)",
+    inputField model.interestRate InterestRateChanged "Процентная ставка по кредиту",
+    inputField model.earlyPrincipal EarlyPrincipalChanged "Досрочное погашение (ежемесячно)",
+    inputField model.depositInterest DepositInterestChanged "Процентная ставка по депозиту",
+    selectField model.depositCapitalization DepositCapitalizationChanged "Капитализация депозита" [
+      (Monthly, "Раз в месяц"),
+      (Yearly, "Раз в год")
+    ]
   ]
 
 prettyPrice price =
@@ -60,12 +63,12 @@ renderPayment payment =
 
 renderPaymentsHeader =
   tr [] [
-    th [] [text "Month"],
-    th [] [text "Principal"],
-    th [] [text "Interest"],
-    th [] [text "Early principal"],
-    th [] [text "Principal balance"],
-    th [] [text "Total"]
+    th [] [text "Месяц"],
+    th [] [text "Основной долг"],
+    th [] [text "Проценты"],
+    th [] [text "Досрочное погашение"],
+    th [] [text "Остаток кредита"],
+    th [] [text "Всего"]
   ]
 
 renderPayments model =
@@ -79,23 +82,23 @@ renderPaymentsTotal total =
   div [class "block"] [
     br [] [],
     div [class "block-item"] [
-      strong [] [text "Total principal: "],
+      strong [] [text "Кредит: "],
       text <| (toString total.principal) ++ " руб"
     ],
     div [class "block-item"] [
-      strong [] [text "Total interest: "],
+      strong [] [text "Проценты: "],
       text <| (toString total.interest) ++ " руб"
     ],
     div [class "block-item"] [
-      strong [] [text "Overpayment: "],
+      strong [] [text "Переплата: "],
       text <| (toString total.overpayment) ++ " %"
     ],
     div [class "block-item"] [
-      strong [] [text "Effective percent: "],
+      strong [] [text "Эквиватентный процент: "],
       text <| (toString total.effectivePercent) ++ " %"
     ],
     div [class "block-item"] [
-      strong [] [text "Interest saved: "],
+      strong [] [text "Сэкономлено процентов: "],
       text <| (toString total.interestSaved) ++ " руб"
     ],
     br [] []
@@ -113,10 +116,10 @@ renderDepositHistory depositHistory =
   table [class "mortgage-table"] [
     tbody [] ([
       tr [] [
-        th [] [text "Month"],
-        th [] [text "Deposit"],
-        th [] [text "Interest"],
-        th [] [text "Total"]
+        th [] [text "Месяц"],
+        th [] [text "Внесено на депозит"],
+        th [] [text "Проценты"],
+        th [] [text "На депозите"]
       ]
     ] ++ (List.map renderDepositItem depositHistory))
   ]
@@ -125,14 +128,14 @@ renderDepositTotal total =
   div [class "block"] [
     br [] [],
     div [class "block-item"] [
-      strong [] [text "Total: "],
+      strong [] [text "Итого на вкладе: "],
       text <| (toString total.total) ++ " руб"
     ],
     div [class "block-item"] [text "."],
     div [class "block-item"] [text "."],
     div [class "block-item"] [text "."],
     div [class "block-item"] [
-      strong [] [text "Interest earned: "],
+      strong [] [text "Получено процентов: "],
       text <| (toString total.interest) ++ " руб"
     ],
     br [] []
@@ -161,9 +164,9 @@ renderInterestComparator mortgageSavedIntereset depositInterest =
 renderMortgageChart payments windowSize =
   let
     data = [
-      ("Early principal", List.map .earlyPrincipal payments),
-      ("Principal", List.map .principal payments),
-      ("Interest", List.map .interest payments)
+      ("Досрочные погашения", List.map .earlyPrincipal payments),
+      ("Основной долг", List.map .principal payments),
+      ("Проценты", List.map .interest payments)
     ]
   in
     Charts.StackedBarChart.render data windowSize
@@ -172,7 +175,7 @@ renderEarlyPrincipalStatChart earlyPrincipalStats windowSize =
   let
     effectivePercentLine = List.map (\item -> (item.earlyPrincipal, item.effectivePercent)) earlyPrincipalStats
     earlyPrincipalLine = List.map (\item -> (item.earlyPrincipal, toFloat item.monthCount)) earlyPrincipalStats
-    labels = ("Equivalent percent", "Month count")
+    labels = ("Ежемесячное досрочное погашение (руб.)", "Эквивалентный процент", "Период погашения кредита (мес.)")
   in
     Charts.LineChart.render effectivePercentLine earlyPrincipalLine windowSize labels
 

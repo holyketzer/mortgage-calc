@@ -71,15 +71,15 @@ area model size =
     |> d
 
 
-view : List (Float, Float) -> List (Float, Float) -> ChartSize -> (String, String) -> Svg msg
-view lineModel areaModel size labels =
+view : List (Float, Float) -> List (Float, Float) -> ChartSize -> (String, String, String) -> Svg msg
+view lineModel areaModel size (xLabel, y1Label, y2Label) =
   let
     hintData = List.map2 (,) lineModel areaModel
 
     showHint ((x1, y1), (_, y2)) =
       let
         lineStep = 17
-        maxHintWidth = 150
+        maxHintWidth = 300
         scale = xScale size.w (getRange Tuple.first lineModel)
         xPos = Scale.convert scale x1
         xHintPos = Basics.min xPos ((Tuple.second <| Scale.range scale) - maxHintWidth)
@@ -94,8 +94,9 @@ view lineModel areaModel size labels =
           rect [x <| toString xPos, y "0", width "20", height <| toString (size.h - 2 * padding), fillOpacity "0.0"] [],
           g [class "hint"] [
             rect [x <| toString xPos, y "0", width "1", height <| toString (size.h - 2 * padding), fillOpacity "0.3"] [],
-            hintLine -1 (Tuple.first labels) y1 "green",
-            hintLine 0 (Tuple.second labels) y2 "red"
+            hintLine -2 xLabel x1 "gray",
+            hintLine -1 y1Label y1 "green",
+            hintLine 0 y2Label y2 "red"
           ]
         ]
   in
