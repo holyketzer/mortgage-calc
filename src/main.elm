@@ -76,6 +76,14 @@ handleInput model field setter newValue converter =
         Err message ->
           setter model (field |> setFieldError message newValue)
 
+    period = updatedModel.period.value
+    addPeriod = max 0 (period - (Array.length updatedModel.earlyPrincipalList))
+
+    earlyPrincipalList =
+      Array.append
+        (Array.fromList (List.take period (Array.toList updatedModel.earlyPrincipalList)))
+        (Array.repeat addPeriod (buildField 0 IntValue))
+
     payments = paymentsHistory updatedModel (toFloat updatedModel.earlyPrincipal.value)
     total = paymentsTotal payments (toFloat updatedModel.amount.value) (monthlyRate updatedModel.interestRate.value) updatedModel.period.value
     deposits = getDepositHistory payments updatedModel.depositInterest.value updatedModel.depositCapitalization.value
@@ -94,6 +102,7 @@ handleInput model field setter newValue converter =
         total = total,
         depositHistory = deposits,
         depositTotal = depositTotal,
+        earlyPrincipalList = earlyPrincipalList,
         earlyPrincipalStats = earlyPrincipalStats
     }
   )

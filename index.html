@@ -31210,7 +31210,9 @@ var _user$project$Calc$percentByInterest = F4(
 			function (amount, monthCount, totalInterest, left, right, delta) {
 				percentByInterestLoop:
 				while (true) {
-					if (_elm_lang$core$Native_Utils.cmp(delta, 10) > 0) {
+					if ((_elm_lang$core$Native_Utils.cmp(delta, 10) > 0) && (_elm_lang$core$Native_Utils.cmp(
+						_elm_lang$core$Basics$abs(right - left),
+						1.0e-3) > 0)) {
 						var newCurrent = (right + left) / 2;
 						var newInterest = A3(_user$project$Calc$interestAmount, amount, newCurrent, monthCount);
 						var newDelta = _elm_lang$core$Basics$abs(newInterest - totalInterest);
@@ -33315,6 +33317,22 @@ var _user$project$Main$handleInput = F5(
 					A3(_user$project$Main$setFieldError, _p1._0, newValue, field));
 			}
 		}();
+		var period = updatedModel.period.value;
+		var addPeriod = A2(
+			_elm_lang$core$Basics$max,
+			0,
+			period - _elm_lang$core$Array$length(updatedModel.earlyPrincipalList));
+		var earlyPrincipalList = A2(
+			_elm_lang$core$Array$append,
+			_elm_lang$core$Array$fromList(
+				A2(
+					_elm_lang$core$List$take,
+					period,
+					_elm_lang$core$Array$toList(updatedModel.earlyPrincipalList))),
+			A2(
+				_elm_lang$core$Array$repeat,
+				addPeriod,
+				A2(_user$project$Model$buildField, 0, _user$project$Model$IntValue)));
 		var payments = A2(
 			_user$project$Calc$paymentsHistory,
 			updatedModel,
@@ -33337,7 +33355,7 @@ var _user$project$Main$handleInput = F5(
 		}();
 		return _elm_lang$core$Native_Utils.update(
 			updatedModel,
-			{payments: payments, total: total, depositHistory: deposits, depositTotal: depositTotal, earlyPrincipalStats: earlyPrincipalStats});
+			{payments: payments, total: total, depositHistory: deposits, depositTotal: depositTotal, earlyPrincipalList: earlyPrincipalList, earlyPrincipalStats: earlyPrincipalStats});
 	});
 var _user$project$Main$update = F2(
 	function (msg, model) {

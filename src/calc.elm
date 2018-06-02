@@ -109,7 +109,7 @@ percentByInterest amount monthlyRate totalInterest monthCount =
 
     percentByInterestLoop : Float -> Int -> Float -> Float -> Float -> Float -> Float
     percentByInterestLoop amount monthCount totalInterest left right delta =
-      if delta > 10 then
+      if delta > 10 && abs(right - left) > 0.001 then
         let
           newCurrent = (right + left) / 2
           newInterest = interestAmount amount newCurrent monthCount
